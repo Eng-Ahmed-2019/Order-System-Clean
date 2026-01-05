@@ -1,0 +1,57 @@
+﻿using Dapper;
+using OrderSystem.Domain.Entities;
+using OrderSystem.Infrastructure.Data;
+using OrderSystem.Application.Interfaces;
+
+namespace OrderSystem.Infrastructure.Repositories
+{
+    public class OrderRepository : IOrderRepository
+    {
+        private readonly DapperContext _dapperContext;
+
+        public OrderRepository(DapperContext dapperContext)
+        {
+            _dapperContext = dapperContext;
+        }
+
+        public async Task<int>CreateAsync(Order order)
+        {
+            if (order == null) throw new ArgumentNullException(nameof(order));
+
+            var sql = @"INSERT INTO Orders (OrderNumber, TotalAmount, Status)
+                    VALUES (@OrderNumber, @TotalAmount, @Status);
+                    SELECT CAST(SCOPE_IDENTITY() as int);";
+
+            using var conn = _dapperContext.CreateConnection();
+            return await conn.ExecuteScalarAsync<int>(sql, order);
+        }
+
+        public async Task<Order?> GetByIdAsync(int id)
+        {
+            if (id == 0) throw new ArgumentNullException(nameof(id));
+
+            var sql = "SELECT * FROM Orders WHERE Id = @Id";
+
+            using var connection = _dapperContext.CreateConnection();
+            return await connection.QueryFirstOrDefaultAsync<Order>(sql, new { Id = id });
+        }
+
+        public async Task<bool> ExistsByOrderNumberAsync(string orderNumber)
+        {
+            var sql = "SELECT COUNT(1) FROM Orders WHERE OrderNumber = @OrderNumber";
+
+            using var conn = _dapperContext.CreateConnection();
+            var count = await conn.ExecuteScalarAsync<int>(sql, new { OrderNumber = orderNumber });
+
+            return count > 0;
+        }
+
+        public async Task UpdateStatusAsync(int orderId, string status)
+        {
+            var sql = "UPDATE Orders SET Status = @Status WHERE Id = @Id";
+
+            using var conn = _dapperContext.CreateConnection();
+            await conn.ExecuteAsync(sql, new { Id = orderId, Status = status });
+        }
+    }
+}
