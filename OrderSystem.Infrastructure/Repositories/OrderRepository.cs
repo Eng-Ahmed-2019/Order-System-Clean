@@ -18,8 +18,8 @@ namespace OrderSystem.Infrastructure.Repositories
         {
             if (order == null) throw new ArgumentNullException(nameof(order));
 
-            var sql = @"INSERT INTO Orders (OrderNumber, TotalAmount, Status)
-                    VALUES (@OrderNumber, @TotalAmount, @Status);
+            var sql = @"INSERT INTO Orders (TotalAmount, Status)
+                    VALUES (@TotalAmount, @Status);
                     SELECT CAST(SCOPE_IDENTITY() as int);";
 
             using var conn = _dapperContext.CreateConnection();
@@ -36,12 +36,12 @@ namespace OrderSystem.Infrastructure.Repositories
             return await connection.QueryFirstOrDefaultAsync<Order>(sql, new { Id = id });
         }
 
-        public async Task<bool> ExistsByOrderNumberAsync(string orderNumber)
+        public async Task<bool> ExistsByOrderNumberAsync(int id)
         {
-            var sql = "SELECT COUNT(1) FROM Orders WHERE OrderNumber = @OrderNumber";
+            var sql = "SELECT COUNT(1) FROM Orders WHERE Id = @Id";
 
             using var conn = _dapperContext.CreateConnection();
-            var count = await conn.ExecuteScalarAsync<int>(sql, new { OrderNumber = orderNumber });
+            var count = await conn.ExecuteScalarAsync<int>(sql, new { Id = id });
 
             return count > 0;
         }

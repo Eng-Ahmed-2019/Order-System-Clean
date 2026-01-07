@@ -94,6 +94,11 @@ builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
 builder.Services.AddScoped<IPaymentLogRepository, PaymentLogRepository>();
 builder.Services.AddScoped<ISessionRepository, SessionRepository>();
 builder.Services.AddScoped<ILogRepository, LogRepositories>();
+builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+builder.Services.AddScoped<ISubCategoryRepository, SubCategoryRepository>();
+builder.Services.AddScoped<IProductRepository, ProductRepository>();
+builder.Services.AddScoped<ICartRepository, CartRepository>();
+builder.Services.AddScoped<IOrderItemRepository, OrderItemRepository>();
 builder.Services.AddHostedService<PaymentRetryBackgroundService>();
 builder.Services.Configure<StripeSettings>(
         builder.Configuration.GetSection("Stripe")
@@ -111,6 +116,10 @@ builder.Services.AddValidatorsFromAssemblyContaining<CreateOrderValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<LoginValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<ProcessPaymentValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<RegisterValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<CreateCategoryValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<CreateSubCategoryValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<CreateProductValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<AddToCartValidator>();
 // https://jsonplaceholder.typicode.com/posts
 builder.Services.AddHttpClient("ExternalApi", client =>
 {
@@ -132,6 +141,11 @@ builder.Services.AddMediatR(r =>
     r.RegisterServicesFromAssembly(typeof(LogoutUserHandler).Assembly);
     r.RegisterServicesFromAssembly(typeof(ProcessStripePaymentHandler).Assembly);
     r.RegisterServicesFromAssembly(typeof(RegisterUserHandler).Assembly);
+    r.RegisterServicesFromAssembly(typeof(CreateCategoryHandler).Assembly);
+    r.RegisterServicesFromAssembly(typeof(CreateSubCategoryHandler).Assembly);
+    r.RegisterServicesFromAssembly(typeof(CreateProductHandler).Assembly);
+    r.RegisterServicesFromAssembly(typeof(AddToCartHandler).Assembly);
+    r.RegisterServicesFromAssembly(typeof(CheckoutHandler).Assembly);
 });
 // Force TLS 1.2 for all outgoing HTTPS requests
 ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;

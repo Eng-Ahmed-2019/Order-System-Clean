@@ -32,7 +32,6 @@ namespace OrderSystem.Application.CQRS.Handlers
             return new OrderResponseDto
             {
                 Id = order.Id,
-                OrderNumber = order.OrderNumber,
                 TotalAmount = order.TotalAmount,
                 Status = order.Status,
                 CreatedAt = order.CreatedAt

@@ -24,12 +24,12 @@ namespace OrderSystem.Application.CQRS.Handlers
             if (request == null) throw new ArgumentNullException(nameof(request));
             var order = new Order
             {
-                OrderNumber = request.order.OrderNumber,
+                UserId = request.userId,
                 TotalAmount = request.order.TotalAmount,
                 Status = OrderStatus.PaymentPending
             };
             Serilog.Log.Information(
-                $"Order created successfully with Id {request.order.OrderNumber}"
+                $"Order created successfully"
             );
             return await _orderRepository.CreateAsync(order);
         }

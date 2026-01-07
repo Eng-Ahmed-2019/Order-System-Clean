@@ -15,16 +15,6 @@ namespace OrderSystem.Application.Validators
             RuleFor(x => x.OrderId)
                 .GreaterThan(0)
                 .WithMessage("OrderId must be greater than 0");
-
-            RuleFor(x => x.Amount)
-                .GreaterThan(0)
-                .WithMessage("Amount must be greater than 0")
-                .Must(HaveMaxTwoDecimalPlaces)
-                .WithMessage("Amount must have at most 2 decimal places");
-        }
-        private bool HaveMaxTwoDecimalPlaces(decimal amount)
-        {
-            return decimal.Round(amount, 2) == amount;
         }
     }
 }

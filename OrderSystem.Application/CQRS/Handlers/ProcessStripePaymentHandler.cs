@@ -20,6 +20,8 @@ namespace OrderSystem.Application.CQRS.Handlers
         private readonly StripeSettings _stripeSettings;
         private readonly IOrderRepository _orderRepository;
         private readonly ILogRepository _repository;
+        private readonly IOrderItemRepository _orderItemRepository;
+        private readonly IProductRepository _productRepository;
 
         public ProcessStripePaymentHandler(
             IHttpClientFactory httpClientFactory,
@@ -27,7 +29,9 @@ namespace OrderSystem.Application.CQRS.Handlers
             IPaymentRepository paymentRepo,
             IOptions<StripeSettings> stripeOptions,
             IOrderRepository orderRepository,
-            ILogRepository repository
+            ILogRepository repository,
+            IOrderItemRepository orderItemRepository,
+            IProductRepository productRepository
             )
         {
             _httpClientFactory = httpClientFactory;
@@ -36,6 +40,8 @@ namespace OrderSystem.Application.CQRS.Handlers
             _stripeSettings = stripeOptions.Value;
             _orderRepository = orderRepository;
             _repository = repository;
+            _orderItemRepository = orderItemRepository;
+            _productRepository = productRepository;
         }
 
         public async Task<bool> Handle(ProcessStripePaymentCommand command, CancellationToken cancellationToken)
@@ -64,8 +70,22 @@ namespace OrderSystem.Application.CQRS.Handlers
             var o = await _orderRepository.GetByIdAsync(command.orderId);
             if (o == null)
                 throw new NotFoundException($"Not Found Any Order Match With: \"{command.orderId}\"");
-            if (o.Status == "Paid")
-                throw new PaidException($"Order {command.orderId} was paid before");
+            if (o.Status != OrderStatus.PaymentPending)
+                throw new Exception(
+                    $"Order {command.orderId} is not ready for payment"
+                );
+            var items = await _orderItemRepository.GetByOrderIdAsync(command.orderId);
+            foreach (var item in items)
+            {
+                var stock = await _productRepository.GetStockAsync(item.ProductId);
+
+                if (stock < item.Quantity)
+                {
+                    throw new Exception(
+                        $"Insufficient stock for product {item.ProductId}"
+                    );
+                }
+            }
             var client = _httpClientFactory.CreateClient();
             client.BaseAddress = new Uri("https://api.stripe.com/v1/");
             client.DefaultRequestHeaders.Authorization =
@@ -73,11 +93,14 @@ namespace OrderSystem.Application.CQRS.Handlers
                     "Bearer",
                     _stripeSettings.SecretKey
                 );
+            if (!items.Any())
+                throw new Exception("Order has no items");
+            var totalAmount = items.Sum(x => x.UnitPrice * x.Quantity);
             var paymentData = new Dictionary<string, string>
             {
-                { "amount", ((int)(command.amount * 100)).ToString() },
-                {"currency","usd" },
-                {"payment_method_types[]","card" }
+                { "amount", ((int)(totalAmount * 100)).ToString() },
+                { "currency", "usd" },
+                { "payment_method_types[]", "card" }
             };
             var content = new FormUrlEncodedContent(paymentData);
             try
@@ -95,23 +118,35 @@ namespace OrderSystem.Application.CQRS.Handlers
                         ResponseJson = responseJson
                     }
                 );
+                var paymentStatus = response.IsSuccessStatusCode
+                    ? PaymentStatus.Success
+                    : PaymentStatus.Failed;
+                var orderStatus = paymentStatus == PaymentStatus.Success
+                    ? OrderStatus.Paid
+                    : OrderStatus.Failed;
                 await _paymentRepo.CreateAsync(
                     new Payment
                     {
                         OrderId = command.orderId,
                         Provider = "Stripe",
-                        Status = response.IsSuccessStatusCode
-                        ? PaymentStatus.Success
-                        : PaymentStatus.Failed,
+                        Status = paymentStatus,
                         TransactionId = Guid.NewGuid().ToString()
                     }
                 );
-                await _orderRepository.UpdateStatusAsync(command.orderId, OrderStatus.Paid);
+                await _orderRepository.UpdateStatusAsync(command.orderId, orderStatus);
                 Serilog.Log.Information(
                     "Stripe payment finished for OrderId {OrderId} with Status {Status}",
                     command.orderId,
                     response.IsSuccessStatusCode
                 );
+                if (paymentStatus == PaymentStatus.Success)
+                {
+                    foreach (var item in items)
+                    {
+                        await _productRepository.DecreaseStockAsync(item.ProductId, item.Quantity);
+                        await _productRepository.SetInactiveIfOutOfStockAsync(item.ProductId);
+                    }
+                }
                 return response.IsSuccessStatusCode;
             }
             catch (Exception ex)

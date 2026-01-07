@@ -37,7 +37,7 @@ namespace OrderSystem.API.Controllers
                     Error = e.ErrorMessage
                 }));
             }
-            var r = await _mediator.Send(new ProcessPaymentCommand(process.OrderId, process.Amount));
+            var r = await _mediator.Send(new ProcessPaymentCommand(process.OrderId));
             return r ? Ok("Success Process") : BadRequest("Failed Process");
         }
 
@@ -56,7 +56,7 @@ namespace OrderSystem.API.Controllers
                     Error = e.ErrorMessage
                 }));
             }
-            var result = await _mediator.Send(new ProcessStripePaymentCommand(dto.OrderId, dto.Amount));
+            var result = await _mediator.Send(new ProcessStripePaymentCommand(dto.OrderId));
             return result ? Ok("Success Process") : BadRequest("Failed Process");
         }
     }

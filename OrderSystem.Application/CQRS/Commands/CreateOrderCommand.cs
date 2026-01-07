@@ -3,7 +3,7 @@ using OrderSystem.Application.DTOs;
 
 namespace OrderSystem.Application.CQRS.Commands
 {
-    public record CreateOrderCommand(CreateOrderRequestDto order) : IRequest<int>;
+    public record CreateOrderCommand(CreateOrderRequestDto order, int userId) : IRequest<int>;
 
     /*
     public record CreateOrderCommand

@@ -1,8 +1,10 @@
 ﻿using MediatR;
 using FluentValidation;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using OrderSystem.Application.DTOs;
 using Microsoft.AspNetCore.Authorization;
+using OrderSystem.Application.Exceptions;
 using OrderSystem.Application.CQRS.Queries;
 using OrderSystem.Application.CQRS.Commands;
 
@@ -34,7 +36,11 @@ namespace OrderSystem.API.Controllers
                     Error = e.ErrorMessage
                 }));
             }
-            var id = await _mediator.Send(new CreateOrderCommand(dto));
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdClaim))
+                throw new NotFoundException("User not authenticated");
+            var userId = int.Parse(userIdClaim);
+            var id = await _mediator.Send(new CreateOrderCommand(dto, userId));
             return Ok(new { OrderId = id });
         }
 

@@ -6,7 +6,7 @@ namespace OrderSystem.Application.Interfaces
     {
         Task<int> CreateAsync(Order order);
         Task<Order?> GetByIdAsync(int id);
-        Task<bool> ExistsByOrderNumberAsync(string orderNumber);
+        Task<bool> ExistsByOrderNumberAsync(int id);
         Task UpdateStatusAsync(int orderId, string status);
     }
 }

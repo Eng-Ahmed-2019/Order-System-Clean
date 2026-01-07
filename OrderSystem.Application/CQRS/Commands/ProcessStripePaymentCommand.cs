@@ -2,7 +2,7 @@
 
 namespace OrderSystem.Application.CQRS.Commands
 {
-    public record ProcessStripePaymentCommand(int orderId,decimal amount)
+    public record ProcessStripePaymentCommand(int orderId)
         :IRequest<bool>
     ;
 }
