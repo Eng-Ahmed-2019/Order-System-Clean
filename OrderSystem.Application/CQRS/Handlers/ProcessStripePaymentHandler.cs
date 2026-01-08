@@ -1,4 +1,5 @@
-﻿using MediatR;
+﻿/*
+using MediatR;
 using System.Text.Json;
 using System.Net.Http.Headers;
 using OrderSystem.Domain.Enums;
@@ -71,9 +72,7 @@ namespace OrderSystem.Application.CQRS.Handlers
             if (o == null)
                 throw new NotFoundException($"Not Found Any Order Match With: \"{command.orderId}\"");
             if (o.Status != OrderStatus.PaymentPending)
-                throw new Exception(
-                    $"Order {command.orderId} is not ready for payment"
-                );
+                throw new OrderException($"Order {command.orderId} is not ready for payment");
             var items = await _orderItemRepository.GetByOrderIdAsync(command.orderId);
             foreach (var item in items)
             {
@@ -81,9 +80,7 @@ namespace OrderSystem.Application.CQRS.Handlers
 
                 if (stock < item.Quantity)
                 {
-                    throw new Exception(
-                        $"Insufficient stock for product {item.ProductId}"
-                    );
+                    throw new StockException($"Insufficient stock for product {item.ProductId}");
                 }
             }
             var client = _httpClientFactory.CreateClient();
@@ -94,7 +91,7 @@ namespace OrderSystem.Application.CQRS.Handlers
                     _stripeSettings.SecretKey
                 );
             if (!items.Any())
-                throw new Exception("Order has no items");
+                throw new OrderException("Order has no items");
             var totalAmount = items.Sum(x => x.UnitPrice * x.Quantity);
             var paymentData = new Dictionary<string, string>
             {
@@ -163,6 +160,210 @@ namespace OrderSystem.Application.CQRS.Handlers
                     }
                 );
                 return false;
+            }
+        }
+    }
+}
+*/
+using MediatR;
+using System.Text.Json;
+using System.Net.Http.Headers;
+using OrderSystem.Domain.Enums;
+using OrderSystem.Domain.Entities;
+using Microsoft.Extensions.Options;
+using OrderSystem.Application.Settings;
+using OrderSystem.Application.Exceptions;
+using OrderSystem.Application.Interfaces;
+using OrderSystem.Application.CQRS.Commands;
+
+namespace OrderSystem.Application.CQRS.Handlers
+{
+    public class ProcessStripePaymentHandler
+        : IRequestHandler<ProcessStripePaymentCommand, bool>
+    {
+        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly IPaymentLogRepository _logRepository;
+        private readonly IPaymentRepository _paymentRepo;
+        private readonly StripeSettings _stripeSettings;
+        private readonly IOrderRepository _orderRepository;
+        private readonly ILogRepository _repository;
+        private readonly IOrderItemRepository _orderItemRepository;
+        private readonly IProductRepository _productRepository;
+
+        public ProcessStripePaymentHandler(
+            IHttpClientFactory httpClientFactory,
+            IPaymentLogRepository logRepository,
+            IPaymentRepository paymentRepo,
+            IOptions<StripeSettings> stripeOptions,
+            IOrderRepository orderRepository,
+            ILogRepository repository,
+            IOrderItemRepository orderItemRepository,
+            IProductRepository productRepository)
+        {
+            _httpClientFactory = httpClientFactory;
+            _logRepository = logRepository;
+            _paymentRepo = paymentRepo;
+            _stripeSettings = stripeOptions.Value;
+            _orderRepository = orderRepository;
+            _repository = repository;
+            _orderItemRepository = orderItemRepository;
+            _productRepository = productRepository;
+        }
+
+        public async Task<bool> Handle(
+            ProcessStripePaymentCommand command,
+            CancellationToken cancellationToken)
+        {
+            Serilog.Log.Information(
+                "Starting Stripe payment for OrderId {OrderId}",
+                command.orderId
+            );
+
+            if (string.IsNullOrWhiteSpace(_stripeSettings.SecretKey))
+            {
+                var msg = "Stripe SecretKey is missing";
+                await _repository.CreatedException(
+                    new Exception(msg),
+                    command.orderId.ToString()
+                );
+                throw new ConfigurationException(msg);
+            }
+
+            var order = await _orderRepository.GetByIdAsync(command.orderId);
+            if (order == null)
+                throw new NotFoundException(
+                    $"Order not found: {command.orderId}"
+                );
+
+            if (order.Status != OrderStatus.PaymentPending)
+                throw new OrderException(
+                    $"Order {command.orderId} is not ready for payment"
+                );
+
+            var items = (await _orderItemRepository
+                .GetByOrderIdAsync(command.orderId))
+                .ToList();
+
+            if (!items.Any())
+                throw new OrderException("Order has no items");
+
+            foreach (var item in items)
+            {
+                var stock = await _productRepository
+                    .GetStockAsync(item.ProductId);
+
+                if (stock < item.Quantity)
+                    throw new StockException(
+                        $"Insufficient stock for product {item.ProductId}"
+                    );
+            }
+
+            var totalAmount = items.Sum(i => i.UnitPrice * i.Quantity);
+
+            var paymentData = new Dictionary<string, string>
+            {
+                { "amount", ((int)(totalAmount * 100)).ToString() },
+                { "currency", "usd" },
+                { "payment_method_types[]", "card" }
+            };
+
+            var content = new FormUrlEncodedContent(paymentData);
+
+            try
+            {
+                var client = _httpClientFactory.CreateClient();
+                client.BaseAddress = new Uri("https://api.stripe.com/v1/");
+                client.DefaultRequestHeaders.Authorization =
+                    new AuthenticationHeaderValue(
+                        "Bearer",
+                        _stripeSettings.SecretKey
+                    );
+
+                var response = await client.PostAsync(
+                    "payment_intents",
+                    content,
+                    cancellationToken
+                );
+
+                var responseJson =
+                    await response.Content.ReadAsStringAsync(cancellationToken);
+
+                await _logRepository.CreateAsync(new PaymentLog
+                {
+                    RequestJson = JsonSerializer.Serialize(paymentData),
+                    ResponseJson = responseJson
+                });
+
+                if (!response.IsSuccessStatusCode)
+                    throw new PaymentGatewayException(
+                        $"Stripe payment failed with status {response.StatusCode}"
+                    );
+
+                await _paymentRepo.CreateAsync(new Payment
+                {
+                    OrderId = command.orderId,
+                    Provider = "Stripe",
+                    Status = PaymentStatus.Success.ToString(),
+                    TransactionId = Guid.NewGuid().ToString()
+                });
+
+                await _orderRepository.UpdateStatusAsync(
+                    command.orderId,
+                    OrderStatus.Paid
+                );
+
+                foreach (var item in items)
+                {
+                    await _productRepository
+                        .DecreaseStockAsync(item.ProductId, item.Quantity);
+
+                    await _productRepository
+                        .SetInactiveIfOutOfStockAsync(item.ProductId);
+                }
+
+                Serilog.Log.Information(
+                    "Stripe payment completed successfully for OrderId {OrderId}",
+                    command.orderId
+                );
+
+                return true;
+            }
+            catch (HttpRequestException ex)
+            {
+                Serilog.Log.Error(ex,
+                    "Stripe gateway connection error for OrderId {OrderId}",
+                    command.orderId
+                );
+
+                throw new PaymentGatewayException(
+                    "Stripe service is unavailable"
+                );
+            }
+            catch (TaskCanceledException ex)
+            {
+                Serilog.Log.Error(ex,
+                    "Stripe gateway timeout for OrderId {OrderId}",
+                    command.orderId
+                );
+
+                throw new PaymentGatewayException(
+                    "Stripe request timeout"
+                );
+            }
+            catch (Exception ex)
+            {
+                Serilog.Log.Error(ex,
+                    "Stripe payment failed for OrderId {OrderId}",
+                    command.orderId
+                );
+
+                await _logRepository.CreateAsync(new PaymentLog
+                {
+                    RequestJson = JsonSerializer.Serialize(paymentData),
+                    ResponseJson = ex.Message
+                });
+
+                throw;
             }
         }
     }

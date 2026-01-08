@@ -16,11 +16,14 @@ namespace OrderSystem.Infrastructure.Repositories
 
         public async Task<int> CreateAsync(User user)
         {
-            if (user == null) { throw new ArgumentNullException("user"); }
+            if (user == null)
+                throw new ArgumentNullException(nameof(user));
 
-            var sql = @"INSERT INTO Orders (UserId, OrderNumber, TotalAmount, Status)
-            VALUES (@UserId, @OrderNumber, @TotalAmount, @Status);
-            SELECT CAST(SCOPE_IDENTITY() as int);";
+            var sql = @"
+                INSERT INTO Users (FullName, NationalId, Email, PasswordHash, CreatedAt)
+                VALUES (@FullName, @NationalId, @Email, @PasswordHash, GETUTCDATE());
+                SELECT CAST(SCOPE_IDENTITY() AS INT);
+            ";
 
             using var conn = _dapperContext.CreateConnection();
             return await conn.ExecuteScalarAsync<int>(sql, user);

@@ -1,8 +1,8 @@
 ﻿using MediatR;
 using Serilog;
-using OrderSystem.Application.CQRS.Queries;
 using OrderSystem.Application.DTOs;
 using OrderSystem.Application.Interfaces;
+using OrderSystem.Application.CQRS.Queries;
 
 namespace OrderSystem.Application.CQRS.Handlers
 {

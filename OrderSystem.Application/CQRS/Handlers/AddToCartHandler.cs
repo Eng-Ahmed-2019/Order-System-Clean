@@ -40,9 +40,9 @@ namespace OrderSystem.Application.CQRS.Handlers
             var product = await _productRepo.GetByIdAsync(request.dto.ProductId)
                 ?? throw new NotFoundException("Product not found");
             if (!product.IsActive)
-                throw new Exception("Product is not available");
+                throw new IsActiveException("Product is not available");
             if (product.Stock < request.dto.Quantity)
-                throw new Exception("Not enough stock available");
+                throw new StockException("Not enough stock available");
             if (await _cartRepo.ItemExistsAsync(cart.Id, product.Id))
             {
                 await _cartRepo.UpdateItemQuantityAsync(

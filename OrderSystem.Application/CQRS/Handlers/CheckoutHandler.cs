@@ -35,7 +35,7 @@ namespace OrderSystem.Application.CQRS.Handlers
 
             var items = await _orderItemRepo.GetByOrderIdAsync(cart.Id);
             if (!items.Any())
-                throw new Exception("Cart is empty");
+                throw new CartException("Cart is empty");
 
             foreach (var item in items)
             {
@@ -43,10 +43,10 @@ namespace OrderSystem.Application.CQRS.Handlers
                     ?? throw new NotFoundException("Product not found");
 
                 if (!product.IsActive)
-                    throw new Exception("Product is not available");
+                    throw new IsActiveException("Product is not available");
 
                 if (product.Stock < item.Quantity)
-                    throw new Exception($"Not enough stock for product {product.Name}");
+                    throw new StockException($"Not enough stock for product {product.Name}");
             }
             await _orderRepo.UpdateStatusAsync(
                 cart.Id,

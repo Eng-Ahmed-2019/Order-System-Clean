@@ -112,7 +112,6 @@ builder.Services
     )
     .ValidateOnStart();
 builder.Services.AddFluentValidationClientsideAdapters();
-builder.Services.AddValidatorsFromAssemblyContaining<CreateOrderValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<LoginValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<ProcessPaymentValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<RegisterValidator>();
@@ -120,11 +119,12 @@ builder.Services.AddValidatorsFromAssemblyContaining<CreateCategoryValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateSubCategoryValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateProductValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<AddToCartValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<GetOrderValidator>();
 // https://jsonplaceholder.typicode.com/posts
 builder.Services.AddHttpClient("ExternalApi", client =>
 {
     client.BaseAddress = new Uri("http://jsonplaceholder.typicode.com/");
-    client.Timeout = TimeSpan.FromSeconds(10);
+    client.Timeout = TimeSpan.FromSeconds(30);
 })
     .ConfigurePrimaryHttpMessageHandler(() =>
         new HttpClientHandler
@@ -134,7 +134,6 @@ builder.Services.AddHttpClient("ExternalApi", client =>
     );
 builder.Services.AddMediatR(r =>
 {
-    r.RegisterServicesFromAssembly(typeof(CreateOrderHandler).Assembly);
     r.RegisterServicesFromAssembly(typeof(GetOrderByIdHandler).Assembly);
     r.RegisterServicesFromAssemblies(typeof(ProcessPaymentHandler).Assembly);
     r.RegisterServicesFromAssembly(typeof(LoginUserHandler).Assembly);

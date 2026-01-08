@@ -25,17 +25,20 @@ namespace OrderSystem.API.Controllers
         }
 
         [HttpPost("add")]
-        public async Task<IActionResult> AddToCart(
-            AddToCartRequestDto dto)
+        public async Task<IActionResult> AddToCart(AddToCartRequestDto dto)
         {
-            var userId = int.Parse(
-                User.FindFirstValue(ClaimTypes.NameIdentifier)!
-            );
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdClaim)) return Unauthorized("User not found");
+            var userId = int.Parse(userIdClaim);
 
             var validationResult = await _validator.ValidateAsync(dto);
             if (!validationResult.IsValid)
             {
-                return BadRequest(validationResult.Errors);
+                return BadRequest(validationResult.Errors.Select(e => new
+                {
+                    Field = e.PropertyName,
+                    Error = e.ErrorMessage
+                }));
             }
 
             await _mediator.Send(
@@ -44,5 +47,6 @@ namespace OrderSystem.API.Controllers
 
             return Ok("Item added to cart");
         }
+
     }
 }

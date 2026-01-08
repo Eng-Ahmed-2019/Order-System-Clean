@@ -5,6 +5,5 @@
         public const string Cart = "Cart";
         public const string PaymentPending = "PaymentPending";
         public const string Paid = "Paid";
-        public const string Failed = "Failed";
     }
 }

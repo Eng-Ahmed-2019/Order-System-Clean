@@ -1,7 +1,7 @@
 ﻿using MediatR;
 using Serilog;
-using OrderSystem.Application.CQRS.Commands;
 using OrderSystem.Application.Interfaces;
+using OrderSystem.Application.CQRS.Commands;
 
 namespace OrderSystem.Application.CQRS.Handlers
 {

@@ -14,18 +14,6 @@ namespace OrderSystem.Infrastructure.Repositories
             _dapperContext = dapperContext;
         }
 
-        public async Task<int>CreateAsync(Order order)
-        {
-            if (order == null) throw new ArgumentNullException(nameof(order));
-
-            var sql = @"INSERT INTO Orders (TotalAmount, Status)
-                    VALUES (@TotalAmount, @Status);
-                    SELECT CAST(SCOPE_IDENTITY() as int);";
-
-            using var conn = _dapperContext.CreateConnection();
-            return await conn.ExecuteScalarAsync<int>(sql, order);
-        }
-
         public async Task<Order?> GetByIdAsync(int id)
         {
             if (id == 0) throw new ArgumentNullException(nameof(id));
@@ -52,6 +40,14 @@ namespace OrderSystem.Infrastructure.Repositories
 
             using var conn = _dapperContext.CreateConnection();
             await conn.ExecuteAsync(sql, new { Id = orderId, Status = status });
+        }
+
+        public async Task<IEnumerable<Order>> GetByStatusAsync(string status)
+        {
+            var sql = "SELECT * FROM Orders WHERE Status = @Status";
+
+            using var conn = _dapperContext.CreateConnection();
+            return await conn.QueryAsync<Order>(sql, new { Status = status });
         }
     }
 }

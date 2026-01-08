@@ -19,6 +19,8 @@ namespace OrderSystem.Application.CQRS.Handlers
             CreateProductCommand request,
             CancellationToken cancellationToken)
         {
+            if (request == null) throw new ArgumentNullException(nameof(request));
+            var active = request.dto.Stock > 0 ? true : false;
             var product = new Product
             {
                 SubCategoryId = request.dto.SubCategoryId,
@@ -26,7 +28,7 @@ namespace OrderSystem.Application.CQRS.Handlers
                 Description = request.dto.Description,
                 Price = request.dto.Price,
                 Stock = request.dto.Stock,
-                IsActive = true
+                IsActive = active
             };
             return await _repository.CreateAsync(product);
         }

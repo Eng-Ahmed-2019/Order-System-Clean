@@ -23,9 +23,13 @@ namespace OrderSystem.Application.Validators
             RuleFor(x => x.Name)
                 .NotEmpty()
                 .WithMessage("Sub category name is required")
+                .Must(name => name.Trim().ToLower() != "string")
+                .WithMessage($"Name: \"string\" is not valid")
                 .MustAsync(async (dto, name, _) =>
                     !await _subCategoryRepository.ExistsByNameAsync(name, dto.CategoryId))
-                .WithMessage("SubCategory already exists in this category");
+                .WithMessage("SubCategory already exists in this category")
+                .Must(name => name.Trim().Length >= 2)
+                .WithMessage("Category name must be at least 3 characters");
         }
     }
 }

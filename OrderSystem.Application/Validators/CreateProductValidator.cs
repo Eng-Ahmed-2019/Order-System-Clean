@@ -26,9 +26,13 @@ namespace OrderSystem.Application.Validators
                 .WithMessage("Subcategory name is required")
                 .MaximumLength(150)
                 .WithMessage("Subcategory name must be less than 150 characters")
+                .Must(name => name.Trim().ToLower() != "string")
+                .WithMessage($"Name: \"string\" is not valid")
                 .MustAsync(async (dto, name, _) =>
                     !await _productRepository.ExistsByNameAsync(name, dto.SubCategoryId))
-                .WithMessage("Product already exists in this subcategory");
+                .WithMessage("Product already exists in this subcategory")
+                .Must(name => name.Trim().Length >= 3)
+                .WithMessage("Category name must be at least 3 characters");
 
             RuleFor(x => x.Price)
                 .GreaterThan(0)

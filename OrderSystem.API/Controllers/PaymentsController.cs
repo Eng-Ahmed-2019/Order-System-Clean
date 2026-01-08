@@ -24,11 +24,10 @@ namespace OrderSystem.API.Controllers
         [HttpPost("process-payment")]
         public async Task<IActionResult> ProcessPayment
             (
-                ProcessPaymentRequestDto process,
-                [FromServices] IValidator<ProcessPaymentRequestDto> validator
+                ProcessPaymentRequestDto process
             )
         {
-            var validationResult = await validator.ValidateAsync(process);
+            var validationResult = await _validator.ValidateAsync(process);
             if (!validationResult.IsValid)
             {
                 return BadRequest(validationResult.Errors.Select(e => new

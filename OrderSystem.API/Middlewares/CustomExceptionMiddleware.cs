@@ -75,6 +75,15 @@ namespace OrderSystem.API.Middlewares
                         TraceId = traceId
                     };
                     break;
+                case ConfigurationException configuration:
+                    statusCode = (int)HttpStatusCode.Unauthorized;
+                    response = new
+                    {
+                        Success = false,
+                        Message = configuration.Message,
+                        TraceId = traceId
+                    };
+                    break;
                 case NotFoundException nfe:
                     statusCode = (int)HttpStatusCode.NotFound;
                     response = new
@@ -90,6 +99,69 @@ namespace OrderSystem.API.Middlewares
                     {
                         Success = false,
                         Message = pa.Message,
+                        TraceId = traceId
+                    };
+                    break;
+                case BusinessException business:
+                    statusCode = (int)HttpStatusCode.BadRequest;
+                    response = new
+                    {
+                        Success = false,
+                        Message = business.Message,
+                        TraceId = traceId
+                    };
+                    break;
+                case CartException cart:
+                    statusCode = (int)HttpStatusCode.BadRequest;
+                    response = new
+                    {
+                        Success = false,
+                        Message = cart.Message,
+                        TraceId = traceId
+                    };
+                    break;
+                case PaymentGatewayException paymentGateway:
+                    statusCode = (int)HttpStatusCode.BadRequest;
+                    response = new
+                    {
+                        Success = false,
+                        Message = paymentGateway.Message,
+                        TraceId = traceId
+                    };
+                    break;
+                case IsActiveException isactive:
+                    statusCode = (int)HttpStatusCode.BadRequest;
+                    response = new
+                    {
+                        Success = false,
+                        Message = isactive.Message,
+                        TraceId = traceId
+                    };
+                    break;
+                case NotReadyException notready:
+                    statusCode = (int)HttpStatusCode.BadRequest;
+                    response = new
+                    {
+                        Success = false,
+                        Message = notready.Message,
+                        TraceId = traceId
+                    };
+                    break;
+                case OrderException order:
+                    statusCode = (int)HttpStatusCode.BadRequest;
+                    response = new
+                    {
+                        Success = false,
+                        Message = order.Message,
+                        TraceId = traceId
+                    };
+                    break;
+                case StockException stock:
+                    statusCode = (int)HttpStatusCode.BadRequest;
+                    response = new
+                    {
+                        Success = false,
+                        Message = stock.Message,
                         TraceId = traceId
                     };
                     break;
