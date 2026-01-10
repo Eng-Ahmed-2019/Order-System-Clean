@@ -10,5 +10,8 @@ namespace OrderSystem.Application.Interfaces
         Task DecreaseStockAsync(int productId, int quantity);
         Task SetInactiveIfOutOfStockAsync(int productId);
         Task<int> GetStockAsync(int productId);
+        Task<IEnumerable<Product>> GetAllAsync();
+        Task<bool> UpdateAsync(Product product);
+        Task<bool> DeleteAsync(int id);
     }
 }

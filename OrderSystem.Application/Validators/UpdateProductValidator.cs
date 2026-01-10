@@ -1,0 +1,46 @@
+﻿using FluentValidation;
+using OrderSystem.Application.DTOs;
+using OrderSystem.Application.Interfaces;
+
+namespace OrderSystem.Application.Validators
+{
+    public class UpdateProductValidator : AbstractValidator<UpdateProductRequestDto>
+    {
+        private readonly ISubCategoryRepository _subCategoryRepository;
+        private readonly IProductRepository _repository;
+
+        public UpdateProductValidator(ISubCategoryRepository subCategoryRepository, IProductRepository repository)
+        {
+            _subCategoryRepository = subCategoryRepository;
+            _repository = repository;
+
+            RuleFor(x => x.SubCategoryId)
+                .GreaterThan(0)
+                .WithMessage("SubCategoryId must be greater than zero")
+                .MustAsync(async (id, _) =>
+                    await _subCategoryRepository.GetByIdAsync(id) != null)
+                .WithMessage("SubCategory not found");
+
+            RuleFor(x => x.Name)
+                .NotEmpty()
+                .WithMessage("Subcategory name is required")
+                .MaximumLength(150)
+                .WithMessage("Subcategory name must be less than 150 characters")
+                .Must(name => name.Trim().ToLower() != "string")
+                .WithMessage($"Name: \"string\" is not valid")
+                .MustAsync(async (dto, name, _) =>
+                    !await _repository.ExistsByNameAsync(name, dto.SubCategoryId))
+                .WithMessage("Product already exists in this subcategory")
+                .Must(name => name.Trim().Length >= 3)
+                .WithMessage("Category name must be at least 3 characters");
+
+            RuleFor(x => x.Price)
+                .GreaterThan(0)
+                .WithMessage("Price must be greater than zero");
+
+            RuleFor(x => x.Stock)
+                .GreaterThanOrEqualTo(0)
+                .WithMessage("Stock must be greater than or equal to zero");
+        }
+    }
+}

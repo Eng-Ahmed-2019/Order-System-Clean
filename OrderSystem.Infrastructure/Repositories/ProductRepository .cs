@@ -79,5 +79,34 @@ namespace OrderSystem.Infrastructure.Repositories
             using var conn = _context.CreateConnection();
             return await conn.ExecuteScalarAsync<int>(sql, new { ProductId = productId });
         }
+
+        public async Task<IEnumerable<Product>> GetAllAsync()
+        {
+            var sql = @"SELECT * FROM Products ORDER BY Id DESC";
+            using var conn = _context.CreateConnection();
+            return await conn.QueryAsync<Product>(sql);
+        }
+
+        public async Task<bool> UpdateAsync(Product product)
+        {
+            var sql = @"UPDATE Products
+                SET Name = @Name,
+                    Description = @Description,
+                    Price = @Price,
+                    Stock = @Stock,
+                    SubCategoryId = @SubCategoryId,
+                    IsActive = @IsActive
+                WHERE Id = @Id";
+
+            using var conn = _context.CreateConnection();
+            return await conn.ExecuteAsync(sql, product) > 0;
+        }
+
+        public async Task<bool> DeleteAsync(int id)
+        {
+            var sql = "DELETE FROM Products WHERE Id = @Id";
+            using var conn = _context.CreateConnection();
+            return await conn.ExecuteAsync(sql, new { Id = id }) > 0;
+        }
     }
 }
