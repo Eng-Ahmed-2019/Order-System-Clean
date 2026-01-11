@@ -17,17 +17,20 @@ namespace OrderSystem.API.Controllers
         private readonly IValidator<CreateSubCategoryRequestDto> _validator;
         private readonly IValidator<UpdateSubCategoryRequestDto> _validator1;
         private readonly IValidator<DeleteSubCategoryRequestDto> _validator2;
+        private readonly IValidator<GetProductsInSubCategoryRequestDto> _validator3;
 
         public SubCategoriesController(
             IMediator mediator,
             IValidator<CreateSubCategoryRequestDto> validator,
             IValidator<UpdateSubCategoryRequestDto> validator1,
-            IValidator<DeleteSubCategoryRequestDto> validator2)
+            IValidator<DeleteSubCategoryRequestDto> validator2,
+            IValidator<GetProductsInSubCategoryRequestDto> validator3)
         {
             _mediator = mediator;
             _validator = validator;
             _validator1 = validator1;
             _validator2 = validator2;
+            _validator3 = validator3;
         }
 
         [Authorize(Roles = "Admin")]
@@ -58,7 +61,7 @@ namespace OrderSystem.API.Controllers
 
         [Authorize(Roles = "Admin")]
         [HttpPut("Update-SubCategory")]
-        public async Task<IActionResult>UpdateSubCategory(UpdateSubCategoryRequestDto dto)
+        public async Task<IActionResult> UpdateSubCategory(UpdateSubCategoryRequestDto dto)
         {
             var validationResult = await _validator1.ValidateAsync(dto);
             if (!validationResult.IsValid)
@@ -77,7 +80,7 @@ namespace OrderSystem.API.Controllers
 
         [Authorize(Roles = "Admin")]
         [HttpDelete("Delete-SubCategory")]
-        public async Task<IActionResult>DeleteSubCategory(DeleteSubCategoryRequestDto dto)
+        public async Task<IActionResult> DeleteSubCategory(DeleteSubCategoryRequestDto dto)
         {
             var validationResult = await _validator2.ValidateAsync(dto);
             if (!validationResult.IsValid)
@@ -92,6 +95,26 @@ namespace OrderSystem.API.Controllers
             var r = await _mediator.Send(new DeleteSubCategoryCommand(dto.Id));
             if (!r) return BadRequest("Deleted was failed");
             return Ok("Deleted done successfully");
+        }
+
+        [HttpGet("Products-In-SubCategory")]
+        public async Task<IActionResult>
+            GetBySubCategory([FromQuery] GetProductsInSubCategoryRequestDto dto)
+        {
+            var validationResult = await _validator3.ValidateAsync(dto);
+            if (!validationResult.IsValid)
+            {
+                return BadRequest(validationResult.Errors.Select(e => new
+                {
+                    Field = e.PropertyName,
+                    Error = e.ErrorMessage
+                }));
+            }
+            var result = await _mediator.Send(
+                new GetProductsBySubCategoryIdQuery(dto.SubCategoryId)
+            );
+            if (!result.Any()) return NotFound("Not found any Products in this SubCategory");
+            return Ok(result);
         }
     }
 }

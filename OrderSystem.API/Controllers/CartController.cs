@@ -59,6 +59,7 @@ namespace OrderSystem.API.Controllers
             if (userClaims == null) return Unauthorized("User not found");
             var userId = int.Parse(userClaims);
             var oi = await _mediator.Send(new GetCartQuery(userId));
+            if (!oi.Any()) return NotFound("Not found any item here yet");
             return Ok(oi);
         }
 

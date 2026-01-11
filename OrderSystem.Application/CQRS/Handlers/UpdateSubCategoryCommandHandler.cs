@@ -19,6 +19,8 @@ namespace OrderSystem.Application.CQRS.Handlers
             var subCategory = await _subCategoryRepository.GetByIdAsync(command.dto.Id);
             if (subCategory == null) throw new BusinessException("SubCategory not found");
 
+            if (command.dto.Id <= 0) throw new BusinessException("Id Must be greater than zero");
+
             subCategory.Name = command.dto.Name;
             subCategory.Description = command.dto.Description;
             subCategory.CategoryId = command.dto.CategoryId;

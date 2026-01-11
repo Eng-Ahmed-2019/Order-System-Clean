@@ -97,7 +97,8 @@ namespace OrderSystem.API.Controllers
         }
 
         [HttpGet("Certain-SubCategories")]
-        public async Task<IActionResult> GetSubCategoriesByCategory(GetAllSubcategoriesRequestDto dto)
+        public async Task<IActionResult>
+            GetSubCategoriesByCategory([FromQuery] GetAllSubcategoriesRequestDto dto)
         {
             var validationResult = await _validator3.ValidateAsync(dto);
             if (!validationResult.IsValid)
@@ -111,7 +112,8 @@ namespace OrderSystem.API.Controllers
             var result = await _mediator.Send(
                 new GetSubCategoriesByCategoryIdQuery(dto.Id)
             );
-            if (result == null) return NotFound("Not foun any SubCategories in this Category");
+            if (!result.Any()) return NotFound("Not found any SubCategories in this Category");
+
             return Ok(result);
         }
     }

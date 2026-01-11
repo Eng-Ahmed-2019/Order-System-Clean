@@ -20,8 +20,8 @@ namespace OrderSystem.Infrastructure.Repositories
                 throw new ArgumentNullException(nameof(user));
 
             var sql = @"
-                INSERT INTO Users (FullName, NationalId, Email, PasswordHash, CreatedAt)
-                VALUES (@FullName, @NationalId, @Email, @PasswordHash, GETUTCDATE());
+                INSERT INTO Users (FullName, NationalId, Email, PasswordHash, Role, CreatedAt)
+                VALUES (@FullName, @NationalId, @Email, @PasswordHash, @Role, GETUTCDATE());
                 SELECT CAST(SCOPE_IDENTITY() AS INT);
             ";
 

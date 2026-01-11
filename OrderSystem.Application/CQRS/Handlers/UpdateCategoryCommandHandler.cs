@@ -17,6 +17,7 @@ namespace OrderSystem.Application.CQRS.Handlers
         public async Task<bool> Handle(UpdateCategoryCommand command, CancellationToken cancellationToken)
         {
             var category = await _categoryRepository.GetByIdAsync(command.dto.Id);
+            if (command.dto.Id <= 0) throw new BusinessException("Id must be greater than zero");
             if (category == null) throw new BusinessException("Category not found");
             category.Name = command.dto.Name;
             category.Description = command.dto.Description;

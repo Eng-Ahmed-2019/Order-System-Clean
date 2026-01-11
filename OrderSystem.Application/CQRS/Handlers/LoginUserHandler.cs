@@ -34,7 +34,7 @@ namespace OrderSystem.Application.CQRS.Handlers
                 !BCrypt.Net.BCrypt.Verify(command.password, user.PasswordHash))
             {
                 Serilog.Log.Warning("Failed login attempt for Email {Email}", command.Email);
-                throw new UnauthorizedException();
+                throw new UnauthorizedException("Invalid email or password");
             }
             var session = new UserSession
             {
