@@ -1,4 +1,5 @@
 ﻿using Dapper;
+using OrderSystem.Domain.Entities;
 using OrderSystem.Infrastructure.Data;
 using OrderSystem.Application.Interfaces;
 using OrderSystem.Application.Exceptions;
@@ -16,8 +17,6 @@ namespace OrderSystem.Infrastructure.Repositories
 
         public async Task CreatedException(Exception exception, string traceId)
         {
-            if (exception == null) throw new ArgumentNullException(nameof(exception));
-
             var level = exception switch
             {
                 ValidationException => "Warning",
@@ -31,7 +30,7 @@ namespace OrderSystem.Infrastructure.Repositories
                 VALUES (@Level, @Message, @Exception, @TraceId, @CreatedAt);
             ";
 
-            var parameters = new
+            var log = new Log
             {
                 Level = level,
                 Message = exception.Message,
@@ -41,7 +40,7 @@ namespace OrderSystem.Infrastructure.Repositories
             };
 
             using var conn = _dapperContext.CreateConnection();
-            await conn.ExecuteAsync(sql, parameters);
+            await conn.ExecuteAsync(sql, log);
         }
     }
 }

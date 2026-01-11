@@ -35,11 +35,7 @@ namespace OrderSystem.API.Middlewares
                 var logRepository = scope.ServiceProvider.GetRequiredService<ILogRepository>();
                 if (logRepository is not null)
                 {
-                    try
-                    {
-                        await logRepository.CreatedException(ex, traceId);
-                    }
-                    catch { }
+                    await logRepository.CreatedException(ex, traceId);
                 }
             }
         }
