@@ -5,5 +5,6 @@ namespace OrderSystem.Application.Interfaces
     public interface IOrderItemRepository
     {
         Task<IEnumerable<OrderItem>> GetByOrderIdAsync(int orderId);
+        Task<OrderItem?> GetByIdAsync(int id);
     }
 }

@@ -23,5 +23,13 @@ namespace OrderSystem.Infrastructure.Repositories
             using var conn = _dapperContext.CreateConnection();
             return await conn.QueryAsync<OrderItem>(sql, new { OrderId = orderId });
         }
+
+        public async Task<OrderItem?> GetByIdAsync(int id)
+        {
+            var sql = "SELECT * FROM OrderItems WHERE Id = @Id";
+
+            using var conn = _dapperContext.CreateConnection();
+            return await conn.QueryFirstOrDefaultAsync<OrderItem>(sql, new { Id = id });
+        }
     }
 }

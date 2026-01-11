@@ -6,19 +6,19 @@ namespace OrderSystem.Application.Validators
 {
     public class GetProductForCart : AbstractValidator<GetProductForCartDto>
     {
-        private readonly IProductRepository _productRepository;
+        private readonly IOrderItemRepository _orderItemRepository;
 
-        public GetProductForCart(IProductRepository productRepository)
+        public GetProductForCart(IOrderItemRepository orderItemRepository)
         {
-            _productRepository = productRepository;
+            _orderItemRepository = orderItemRepository;
 
-            RuleFor(x => x.ProductId)
+            RuleFor(x => x.Id)
                 .NotEmpty()
-                .WithMessage("Product id is required")
+                .WithMessage("Id is required")
                 .GreaterThan(0)
-                .WithMessage("Product Id must be greater than zero")
-                .MustAsync(async (id, _) => await _productRepository.GetByIdAsync(id) != null)
-                .WithMessage("Product not found here");
+                .WithMessage("Id must be greater than zero")
+                .MustAsync(async (id, _) => await _orderItemRepository.GetByIdAsync(id) != null)
+                .WithMessage("This item not found here");
         }
     }
 }

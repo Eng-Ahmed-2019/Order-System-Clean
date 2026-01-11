@@ -11,6 +11,7 @@ namespace OrderSystem.Application.Interfaces
         Task UpdateItemQuantityAsync(int orderId, int productId, int quantity);
         Task UpdateOrderTotalAsync(int orderId);
         Task<IEnumerable<OrderItem>> GetCartItemsAsync(int orderId);
-        Task RemoveItemAsync(int orderId, int productId);
+        Task<bool> RemoveItemAsync(int id);
+        Task DeleteCartAsync(int orderId);
     }
 }

@@ -2,6 +2,6 @@
 {
     public class GetProductForCartDto
     {
-        public int ProductId { set; get; }
+        public int Id { set; get; }
     }
 }

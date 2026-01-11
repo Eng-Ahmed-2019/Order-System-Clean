@@ -79,11 +79,11 @@ namespace OrderSystem.Infrastructure.Repositories
         public async Task UpdateOrderTotalAsync(int orderId)
         {
             var sql = @"UPDATE Orders
-                        SET TotalAmount = (
+                        SET TotalAmount = ISNULL((
                             SELECT SUM(Quantity * UnitPrice)
                             FROM OrderItems
                             WHERE OrderId = @OrderId
-                        )
+                        ),0)
                         WHERE Id = @OrderId";
 
             using var conn = _context.CreateConnection();
@@ -101,15 +101,20 @@ namespace OrderSystem.Infrastructure.Repositories
             return await conn.QueryAsync<OrderItem>(sql, new { OrderId = orderId });
         }
 
-        public async Task RemoveItemAsync(int orderId, int productId)
+        public async Task<bool> RemoveItemAsync(int id)
         {
             var sql = @"DELETE FROM OrderItems
-                WHERE OrderId = @OrderId AND ProductId = @ProductId";
+                WHERE Id = @Id";
 
             using var conn = _context.CreateConnection();
-            await conn.ExecuteAsync(sql, new { OrderId = orderId, ProductId = productId });
+            return await conn.ExecuteAsync(sql, new { Id = id }) > 0;
+        }
 
-            await UpdateOrderTotalAsync(orderId);
+        public async Task DeleteCartAsync(int orderId)
+        {
+            var sql = "DELETE FROM Orders WHERE Id = @Id";
+            using var conn = _context.CreateConnection();
+            await conn.ExecuteAsync(sql, new { Id = orderId });
         }
     }
 }

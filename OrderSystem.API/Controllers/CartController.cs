@@ -78,7 +78,8 @@ namespace OrderSystem.API.Controllers
             var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userIdClaim)) return Unauthorized("User not found");
             var userId = int.Parse(userIdClaim);
-            await _mediator.Send(new RemoveFromCartQuery(userId, dto.ProductId));
+            var r = await _mediator.Send(new RemoveFromCartQuery(dto.Id));
+            if (!r) return BadRequest("This item not found here");
             return Ok("Item removed from cart");
         }
     }

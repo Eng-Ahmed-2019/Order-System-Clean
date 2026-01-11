@@ -23,18 +23,8 @@ namespace OrderSystem.Infrastructure.Repositories
             using var conn = _dapperContext.CreateConnection();
             return await conn.QueryFirstOrDefaultAsync<Order>(
                 sql,
-                new { OrderId = id, UserId = userId }
+                new { Id = id, UserId = userId }
             );
-        }
-
-        public async Task<bool> ExistsByOrderNumberAsync(int id)
-        {
-            var sql = "SELECT COUNT(1) FROM Orders WHERE Id = @Id";
-
-            using var conn = _dapperContext.CreateConnection();
-            var count = await conn.ExecuteScalarAsync<int>(sql, new { Id = id });
-
-            return count > 0;
         }
 
         public async Task UpdateStatusAsync(int orderId, string status)
