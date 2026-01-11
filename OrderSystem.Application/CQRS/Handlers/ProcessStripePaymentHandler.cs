@@ -229,7 +229,7 @@ namespace OrderSystem.Application.CQRS.Handlers
                 throw new ConfigurationException(msg);
             }
 
-            var order = await _orderRepository.GetByIdAsync(command.orderId);
+            var order = await _orderRepository.GetByIdAsync(command.orderId, command.userId);
             if (order == null)
                 throw new NotFoundException(
                     $"Order not found: {command.orderId}"

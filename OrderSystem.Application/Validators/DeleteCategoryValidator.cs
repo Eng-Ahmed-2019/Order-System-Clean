@@ -17,7 +17,7 @@ namespace OrderSystem.Application.Validators
                 .WithMessage("CategoryId is required here")
                 .GreaterThan(0)
                 .WithMessage("CategoryId must be greater than zero")
-                .MustAsync(async (id, _) => _categoryRepository.GetByIdAsync(id) != null)
+                .MustAsync(async (id, _) => await _categoryRepository.GetByIdAsync(id) != null)
                 .WithMessage("This category not found here");
         }
     }

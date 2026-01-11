@@ -2,7 +2,7 @@
 
 namespace OrderSystem.Application.CQRS.Commands
 {
-    public record ProcessPaymentCommand(int orderId) : IRequest<bool>;
+    public record ProcessPaymentCommand(int orderId, int userId) : IRequest<bool>;
 
     /*
     public class ProcessPaymentCommand

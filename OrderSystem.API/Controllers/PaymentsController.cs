@@ -1,5 +1,6 @@
 ﻿using MediatR;
 using FluentValidation;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using OrderSystem.Application.DTOs;
 using Microsoft.AspNetCore.Authorization;
@@ -27,6 +28,10 @@ namespace OrderSystem.API.Controllers
                 ProcessPaymentRequestDto process
             )
         {
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdClaim)) return Unauthorized("User not found");
+            var userId = int.Parse(userIdClaim);
+
             var validationResult = await _validator.ValidateAsync(process);
             if (!validationResult.IsValid)
             {
@@ -36,7 +41,7 @@ namespace OrderSystem.API.Controllers
                     Error = e.ErrorMessage
                 }));
             }
-            var r = await _mediator.Send(new ProcessPaymentCommand(process.OrderId));
+            var r = await _mediator.Send(new ProcessPaymentCommand(process.OrderId, userId));
             return r ? Ok("Success Process") : BadRequest("Failed Process");
         }
 
@@ -46,6 +51,10 @@ namespace OrderSystem.API.Controllers
                 [FromServices] IValidator<ProcessPaymentRequestDto> validator
             )
         {
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdClaim)) return Unauthorized("User not found");
+            var userId = int.Parse(userIdClaim);
+
             var validationResult = await validator.ValidateAsync(dto);
             if (!validationResult.IsValid)
             {
@@ -55,7 +64,7 @@ namespace OrderSystem.API.Controllers
                     Error = e.ErrorMessage
                 }));
             }
-            var result = await _mediator.Send(new ProcessStripePaymentCommand(dto.OrderId));
+            var result = await _mediator.Send(new ProcessStripePaymentCommand(dto.OrderId, userId));
             return result ? Ok("Success Process") : BadRequest("Failed Process");
         }
     }

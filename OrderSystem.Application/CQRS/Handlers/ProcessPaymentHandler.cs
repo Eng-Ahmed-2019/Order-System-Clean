@@ -183,7 +183,7 @@ namespace OrderSystem.Application.CQRS.Handlers
                 request.orderId
             );
 
-            var order = await _orderRepo.GetByIdAsync(request.orderId);
+            var order = await _orderRepo.GetByIdAsync(request.orderId, request.userId);
             if (order == null)
                 throw new NotFoundException($"Order not found: {request.orderId}");
 
