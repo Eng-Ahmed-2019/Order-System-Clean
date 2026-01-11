@@ -73,5 +73,16 @@ namespace OrderSystem.Infrastructure.Repositories
             using var conn = _context.CreateConnection();
             return await conn.ExecuteAsync(sql, new { Id = id }) > 0;
         }
+
+        public async Task<IEnumerable<SubCategory>> GetByCategoryIdAsync(int categoryId)
+        {
+            var sql = @"SELECT *
+                FROM SubCategories
+                WHERE CategoryId = @CategoryId
+                ORDER BY Id DESC";
+
+            using var conn = _context.CreateConnection();
+            return await conn.QueryAsync<SubCategory>(sql, new { CategoryId = categoryId });
+        }
     }
 }

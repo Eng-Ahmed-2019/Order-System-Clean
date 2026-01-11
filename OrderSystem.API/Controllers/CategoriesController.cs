@@ -17,18 +17,21 @@ namespace OrderSystem.API.Controllers
         private readonly IValidator<CreateCategoryRequestDto> _validator;
         private readonly IValidator<UpdateCategoryRequestDto> _validator1;
         private readonly IValidator<DeleteCategoryDto> _validator2;
+        private readonly IValidator<GetAllSubcategoriesRequestDto> _validator3;
 
         public CategoriesController(
             IMediator mediator,
             IValidator<CreateCategoryRequestDto> validator,
             IValidator<UpdateCategoryRequestDto> validator1,
-            IValidator<DeleteCategoryDto> validator2
+            IValidator<DeleteCategoryDto> validator2,
+            IValidator<GetAllSubcategoriesRequestDto> validator3
             )
         {
             _mediator = mediator;
             _validator = validator;
             _validator1 = validator1;
             _validator2 = validator2;
+            _validator3 = validator3;
         }
 
         [Authorize(Roles = "Admin")]
@@ -50,7 +53,6 @@ namespace OrderSystem.API.Controllers
             return Ok(new { CategoryId = id });
         }
 
-        [Authorize(Roles = "User")]
         [HttpGet("GetAllCategories")]
         public async Task<IActionResult> GetAll()
         {
@@ -92,6 +94,25 @@ namespace OrderSystem.API.Controllers
             var r = await _mediator.Send(new DeleteCategoryCommand(dto.CategoryId));
             if (!r) return BadRequest("Deleted failed");
             return Ok("Deleted successfully");
+        }
+
+        [HttpGet("Certain-SubCategories")]
+        public async Task<IActionResult> GetSubCategoriesByCategory(GetAllSubcategoriesRequestDto dto)
+        {
+            var validationResult = await _validator3.ValidateAsync(dto);
+            if (!validationResult.IsValid)
+            {
+                return BadRequest(validationResult.Errors.Select(e => new
+                {
+                    Field = e.PropertyName,
+                    Error = e.ErrorMessage
+                }));
+            }
+            var result = await _mediator.Send(
+                new GetSubCategoriesByCategoryIdQuery(dto.Id)
+            );
+            if (result == null) return NotFound("Not foun any SubCategories in this Category");
+            return Ok(result);
         }
     }
 }

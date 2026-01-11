@@ -14,7 +14,7 @@ namespace OrderSystem.Infrastructure.Repositories
             _dapperContext = dapperContext;
         }
 
-        public async Task<int>CreateAsync(Category category)
+        public async Task<int> CreateAsync(Category category)
         {
             var sql = @"INSERT INTO Categories (Name, Description)
                         VALUES (@Name, @Description);
@@ -24,7 +24,7 @@ namespace OrderSystem.Infrastructure.Repositories
             return await conn.ExecuteScalarAsync<int>(sql, category);
         }
 
-        public async Task<Category?>GetByIdAsync(int id)
+        public async Task<Category?> GetByIdAsync(int id)
         {
             var sql = "SELECT * FROM Categories WHERE Id = @Id";
             using var conn = _dapperContext.CreateConnection();

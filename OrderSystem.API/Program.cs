@@ -120,13 +120,14 @@ builder.Services.AddValidatorsFromAssemblyContaining<CreateCategoryValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateSubCategoryValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateProductValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<AddToCartValidator>();
-builder.Services.AddValidatorsFromAssemblyContaining<GetOrderValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateCategoryValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<DeleteCategoryValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<UpdateSubCategoryValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<DeleteSubCategoryValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<UpdateProductValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<DeleteProductValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<GetAllSubCategoriesValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<GetAllProductsValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<GetProductForCart>();
 // https://jsonplaceholder.typicode.com/posts
 builder.Services.AddHttpClient("ExternalApi", client =>
@@ -164,6 +165,8 @@ builder.Services.AddMediatR(r =>
     r.RegisterServicesFromAssembly(typeof(GetAllProductsQueryHandler).Assembly);
     r.RegisterServicesFromAssembly(typeof(UpdateProductCommandHandler).Assembly);
     r.RegisterServicesFromAssembly(typeof(DeleteProductCommandHandler).Assembly);
+    r.RegisterServicesFromAssembly(typeof(GetSubCategoriesByCategoryIdHandler).Assembly);
+    r.RegisterServicesFromAssembly(typeof(GetProductsBySubCategoryIdHandler).Assembly);
 });
 // Force TLS 1.2 for all outgoing HTTPS requests
 ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;

@@ -1,6 +1,7 @@
 ﻿using MediatR;
 using Serilog;
 using OrderSystem.Application.DTOs;
+using OrderSystem.Application.Exceptions;
 using OrderSystem.Application.Interfaces;
 using OrderSystem.Application.CQRS.Queries;
 
@@ -21,13 +22,14 @@ namespace OrderSystem.Application.CQRS.Handlers
             if (request == null)
             {
                 Log.Warning("This request was empty");
-                throw new ArgumentNullException(nameof(request));
+                throw new OrderException("This request was empty");
             }
-            var order = await _orderRepository.GetByIdAsync(request.id);
+            if (request.id <= 0) throw new BusinessException("Id must be greater than zero");
+            var order = await _orderRepository.GetByIdAsync(request.id, request.UserId);
             if (order == null)
             {
                 Log.Warning("Order not found with Id {OrderId}", request.id);
-                throw new ArgumentNullException(nameof(order));
+                throw new OrderException("Order not found here");
             }
             return new OrderResponseDto
             {

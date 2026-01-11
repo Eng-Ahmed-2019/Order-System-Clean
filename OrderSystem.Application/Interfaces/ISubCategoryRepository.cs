@@ -11,5 +11,6 @@ namespace OrderSystem.Application.Interfaces
         Task<bool> UpdateAsync(SubCategory subCategory);
         Task<bool> ExistsByNameAsync(string name);
         Task<bool> DeleteAsync(int id);
+        Task<IEnumerable<SubCategory>> GetByCategoryIdAsync(int id);
     }
 }

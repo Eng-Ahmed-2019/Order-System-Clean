@@ -14,14 +14,17 @@ namespace OrderSystem.Infrastructure.Repositories
             _dapperContext = dapperContext;
         }
 
-        public async Task<Order?> GetByIdAsync(int id)
+        public async Task<Order?> GetByIdAsync(int id, int userId)
         {
-            if (id == 0) throw new ArgumentNullException(nameof(id));
+            var sql = @"SELECT *
+                FROM Orders
+                WHERE Id = @Id AND UserId = @UserId";
 
-            var sql = "SELECT * FROM Orders WHERE Id = @Id";
-
-            using var connection = _dapperContext.CreateConnection();
-            return await connection.QueryFirstOrDefaultAsync<Order>(sql, new { Id = id });
+            using var conn = _dapperContext.CreateConnection();
+            return await conn.QueryFirstOrDefaultAsync<Order>(
+                sql,
+                new { OrderId = id, UserId = userId }
+            );
         }
 
         public async Task<bool> ExistsByOrderNumberAsync(int id)

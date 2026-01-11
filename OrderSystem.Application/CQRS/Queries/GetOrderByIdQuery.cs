@@ -3,7 +3,7 @@ using OrderSystem.Application.DTOs;
 
 namespace OrderSystem.Application.CQRS.Queries
 {
-    public record GetOrderByIdQuery(int id) : IRequest<OrderResponseDto>;
+    public record GetOrderByIdQuery(int id, int UserId) : IRequest<OrderResponseDto>;
 
     /*
     public record GetOrderByIdQuery

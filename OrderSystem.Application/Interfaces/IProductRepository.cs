@@ -13,5 +13,6 @@ namespace OrderSystem.Application.Interfaces
         Task<IEnumerable<Product>> GetAllAsync();
         Task<bool> UpdateAsync(Product product);
         Task<bool> DeleteAsync(int id);
+        Task<IEnumerable<Product>> GetBySubCategoryIdAsync(int subCategoryId);
     }
 }
