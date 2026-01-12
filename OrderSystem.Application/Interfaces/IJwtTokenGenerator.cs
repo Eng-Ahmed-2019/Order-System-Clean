@@ -2,6 +2,6 @@
 {
     public interface IJwtTokenGenerator
     {
-        string GenerateToken(int userId, Guid sessionId, DateTime expiresAt);
+        string GenerateToken(int userId, Guid sessionId, DateTime expiresAt, string role);
     }
 }

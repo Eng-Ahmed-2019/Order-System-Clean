@@ -37,5 +37,29 @@ namespace OrderSystem.Infrastructure.Repositories
             using var conn = _dapperContext.CreateConnection();
             return await conn.ExecuteScalarAsync<int>(sql, new { Name = name }) > 0;
         }
+
+        public async Task<IEnumerable<Category>> GetAllAsync()
+        {
+            var sql = "SELECT * FROM Categories ORDER BY Id ASC";
+            using var conn = _dapperContext.CreateConnection();
+            return await conn.QueryAsync<Category>(sql);
+        }
+
+        public async Task<bool> UpdateAsync(Category category)
+        {
+            var sql = @"UPDATE Categories 
+                SET Name = @Name, Description = @Description
+                WHERE Id = @Id";
+
+            using var conn = _dapperContext.CreateConnection();
+            return await conn.ExecuteAsync(sql, category) > 0;
+        }
+
+        public async Task<bool> DeleteAsync(int id)
+        {
+            var sql = "DELETE FROM Categories WHERE Id = @Id";
+            using var conn = _dapperContext.CreateConnection();
+            return await conn.ExecuteAsync(sql, new { Id = id }) > 0;
+        }
     }
 }

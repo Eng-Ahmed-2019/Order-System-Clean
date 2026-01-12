@@ -26,7 +26,8 @@ namespace OrderSystem.Application.CQRS.Handlers
                 FullName = command.FullName,
                 Email = command.Email,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(command.Password),
-                NationalId = command.NationaId
+                NationalId = command.NationaId,
+                Role = "User"
             };
             await _userRepository.CreateAsync(user);
             Serilog.Log.Information(

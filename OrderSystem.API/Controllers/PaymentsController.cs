@@ -7,9 +7,9 @@ using OrderSystem.Application.CQRS.Commands;
 
 namespace OrderSystem.API.Controllers
 {
-    [Authorize]
     [ApiController]
     [Route("api/payments")]
+    [Authorize(Roles = "User")]
     public class PaymentsController : ControllerBase
     {
         private readonly IMediator _mediator;

@@ -23,6 +23,7 @@ namespace OrderSystem.API.Controllers
             _validator = validator;
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPost("create-product")]
         public async Task<IActionResult> CreateProduct(
             CreateProductRequestDto dto)

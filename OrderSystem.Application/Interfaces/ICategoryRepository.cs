@@ -7,5 +7,8 @@ namespace OrderSystem.Application.Interfaces
         Task<int> CreateAsync(Category category);
         Task<Category?> GetByIdAsync(int id);
         Task<bool> ExistsByNameAsync(string name);
+        Task<IEnumerable<Category>> GetAllAsync();
+        Task<bool> UpdateAsync(Category category);
+        Task<bool> DeleteAsync(int id);
     }
 }

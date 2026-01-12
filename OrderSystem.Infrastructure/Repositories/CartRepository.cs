@@ -89,5 +89,27 @@ namespace OrderSystem.Infrastructure.Repositories
             using var conn = _context.CreateConnection();
             await conn.ExecuteAsync(sql, new { OrderId = orderId });
         }
+
+        public async Task<IEnumerable<OrderItem>> GetCartItemsAsync(int orderId)
+        {
+            var sql = @"SELECT oi.*, p.Name, p.Description
+                FROM OrderItems oi
+                INNER JOIN Products p ON p.Id = oi.ProductId
+                WHERE oi.OrderId = @OrderId";
+
+            using var conn = _context.CreateConnection();
+            return await conn.QueryAsync<OrderItem>(sql, new { OrderId = orderId });
+        }
+
+        public async Task RemoveItemAsync(int orderId, int productId)
+        {
+            var sql = @"DELETE FROM OrderItems
+                WHERE OrderId = @OrderId AND ProductId = @ProductId";
+
+            using var conn = _context.CreateConnection();
+            await conn.ExecuteAsync(sql, new { OrderId = orderId, ProductId = productId });
+
+            await UpdateOrderTotalAsync(orderId);
+        }
     }
 }

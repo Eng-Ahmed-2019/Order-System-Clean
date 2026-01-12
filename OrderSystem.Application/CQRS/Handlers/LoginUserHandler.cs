@@ -51,7 +51,8 @@ namespace OrderSystem.Application.CQRS.Handlers
             var token = _jwtTokenGenerator.GenerateToken(
                 user.Id,
                 session.Id,
-                session.ExpiresAt
+                session.ExpiresAt,
+                user.Role
             );
             return new LoginResponseDto
             {

@@ -6,9 +6,9 @@ using OrderSystem.Application.CQRS.Commands;
 
 namespace OrderSystem.API.Controllers
 {
-    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize(Roles = "User")]
     public class CheckoutController : ControllerBase
     {
         private readonly IMediator _mediator;

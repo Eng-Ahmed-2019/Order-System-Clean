@@ -16,13 +16,14 @@ namespace OrderSystem.Application.Services
             _configuration = configuration;
         }
 
-        public string GenerateToken(int userId, Guid sessionId, DateTime expiresAt)
+        public string GenerateToken(int userId, Guid sessionId, DateTime expiresAt, string role)
         {
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
                 new Claim(JwtRegisteredClaimNames.Sid, sessionId.ToString()),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                new Claim(ClaimTypes.Role, role)
             };
 
             var key = new SymmetricSecurityKey(

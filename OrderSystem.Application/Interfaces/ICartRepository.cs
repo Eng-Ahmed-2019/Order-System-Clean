@@ -10,5 +10,7 @@ namespace OrderSystem.Application.Interfaces
         Task<bool> ItemExistsAsync(int orderId, int productId);
         Task UpdateItemQuantityAsync(int orderId, int productId, int quantity);
         Task UpdateOrderTotalAsync(int orderId);
+        Task<IEnumerable<OrderItem>> GetCartItemsAsync(int orderId);
+        Task RemoveItemAsync(int orderId, int productId);
     }
 }

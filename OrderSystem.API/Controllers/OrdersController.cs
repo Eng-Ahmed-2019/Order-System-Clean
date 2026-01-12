@@ -7,9 +7,9 @@ using OrderSystem.Application.CQRS.Queries;
 
 namespace OrderSystem.API.Controllers
 {
-    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize(Roles = "User")]
     public class OrdersController : ControllerBase
     {
         private readonly IMediator _mediator;

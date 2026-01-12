@@ -23,6 +23,7 @@ namespace OrderSystem.API.Controllers
             _validator = validator;
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPost("create-subcategory")]
         public async Task<IActionResult> CreateSubCategory(CreateSubCategoryRequestDto dto)
         {

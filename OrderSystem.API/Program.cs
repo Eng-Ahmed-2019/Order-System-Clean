@@ -4,8 +4,9 @@ using System.Text;
 using FluentValidation;
 using Microsoft.OpenApi.Models;
 using Serilog.Sinks.MSSqlServer;
-using FluentValidation.AspNetCore;
+using OrderSystem.Domain.Entities;
 using OrderSystem.API.Middlewares;
+using FluentValidation.AspNetCore;
 using Microsoft.IdentityModel.Tokens;
 using OrderSystem.Infrastructure.Data;
 using OrderSystem.Application.Services;
@@ -19,7 +20,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
-Log.Logger = new LoggerConfiguration()
+Serilog.Log.Logger = new LoggerConfiguration()
     .WriteTo.File(
         path: "Logs/log-.txt",
         rollingInterval: RollingInterval.Day)
@@ -120,6 +121,9 @@ builder.Services.AddValidatorsFromAssemblyContaining<CreateSubCategoryValidator>
 builder.Services.AddValidatorsFromAssemblyContaining<CreateProductValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<AddToCartValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<GetOrderValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<CreateCategoryValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<DeleteCategoryValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<GetProductForCart>();
 // https://jsonplaceholder.typicode.com/posts
 builder.Services.AddHttpClient("ExternalApi", client =>
 {
@@ -145,6 +149,11 @@ builder.Services.AddMediatR(r =>
     r.RegisterServicesFromAssembly(typeof(CreateProductHandler).Assembly);
     r.RegisterServicesFromAssembly(typeof(AddToCartHandler).Assembly);
     r.RegisterServicesFromAssembly(typeof(CheckoutHandler).Assembly);
+    r.RegisterServicesFromAssembly(typeof(GetCartQueryHandler).Assembly);
+    r.RegisterServicesFromAssembly(typeof(RemoveFromCartQueryHandler).Assembly);
+    r.RegisterServicesFromAssembly(typeof(GetAllCategoriesHandler).Assembly);
+    r.RegisterServicesFromAssembly(typeof(UpdateCategoryCommandHandler).Assembly);
+    r.RegisterServicesFromAssembly(typeof(DeleteCategoryCommandHandler).Assembly);
 });
 // Force TLS 1.2 for all outgoing HTTPS requests
 ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
@@ -166,4 +175,22 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.UseMiddleware<UnifiedMiddleware>();
 app.MapControllers();
+using (var scope = app.Services.CreateScope())
+{
+    var userRepo = scope.ServiceProvider.GetRequiredService<IUserRepository>();
+
+    var adminEmail = "al.hawary.ahmed.2001@gmail.com";
+
+    if (!await userRepo.ExistsByEmailAsync(adminEmail))
+    {
+        await userRepo.CreateAsync(new User
+        {
+            FullName = "Ahmed Gamal Gaber",
+            Email = adminEmail,
+            NationalId = "30106092701953",
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword("946201.Com.Com"),
+            Role = "Admin"
+        });
+    }
+}
 app.Run();
