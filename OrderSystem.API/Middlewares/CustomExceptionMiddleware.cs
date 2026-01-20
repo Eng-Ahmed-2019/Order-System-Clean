@@ -35,7 +35,19 @@ namespace OrderSystem.API.Middlewares
                 var logRepository = scope.ServiceProvider.GetRequiredService<ILogRepository>();
                 if (logRepository is not null)
                 {
-                    await logRepository.CreatedException(ex, traceId);
+                    try
+                    {
+                        await logRepository.CreatedException(ex, traceId);
+                    }
+                    catch (Exception logEx)
+                    {
+                        // Never let logging failures break the response
+                        _logger.LogError(
+                            logEx,
+                            "Failed to persist exception log to DB. Original TraceId: {TraceId}",
+                            traceId
+                        );
+                    }
                 }
             }
         }

@@ -1,0 +1,81 @@
+@model OrderSystem.Web.Controllers.StoreController.StoreIndexVm
+@{
+    ViewData["Title"] = "Store";
+}
+
+<div class="row">
+    <div class="col-lg-3">
+        <div class="card mb-3">
+            <div class="card-header">الأقسام</div>
+            <div class="list-group list-group-flush">
+                @foreach (var c in Model.Categories)
+                {
+                    <div class="list-group-item">
+                        <div class="fw-bold">@c.Name</div>
+                        <div class="text-muted small">@c.Description</div>
+                    </div>
+                }
+                @if (!Model.Categories.Any())
+                {
+                    <div class="list-group-item text-muted">لا يوجد أقسام</div>
+                }
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">التصنيفات الفرعية</div>
+            <div class="list-group list-group-flush">
+                @foreach (var sc in Model.SubCategories)
+                {
+                    <div class="list-group-item">
+                        <div class="fw-bold">@sc.Name</div>
+                        <div class="text-muted small">@sc.Description</div>
+                    </div>
+                }
+                @if (!Model.SubCategories.Any())
+                {
+                    <div class="list-group-item text-muted">لا يوجد تصنيفات فرعية</div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-9">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+            <h3 class="m-0">المنتجات</h3>
+        </div>
+
+        <div class="row">
+            @foreach (var p in Model.Products)
+            {
+                <div class="col-md-6 col-xl-4 mb-3">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <h5 class="card-title mb-1">@p.Name</h5>
+                                <span class="badge bg-secondary">#@p.Id</span>
+                            </div>
+                            <div class="text-muted small mb-2">@p.Description</div>
+                            <div class="fw-bold">@p.Price.ToString("0.00")</div>
+                            <div class="text-muted small">Stock: @p.Stock</div>
+                        </div>
+                        <div class="card-footer bg-white border-0">
+                            <form asp-controller="Cart" asp-action="Add" method="post" class="d-flex gap-2">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="ProductId" value="@p.Id" />
+                                <input type="number" name="Quantity" value="1" min="1" class="form-control" style="max-width:110px;" />
+                                <button class="btn btn-primary flex-grow-1" type="submit">إضافة للسلة</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            }
+            @if (!Model.Products.Any())
+            {
+                <div class="col-12">
+                    <div class="alert alert-info">لا يوجد منتجات</div>
+                </div>
+            }
+        </div>
+    </div>
+</div>

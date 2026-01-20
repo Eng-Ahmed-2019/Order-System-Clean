@@ -1,0 +1,49 @@
+@model List<OrderSystem.Domain.Entities.Product>
+@{
+    ViewData["Title"] = "Admin - Products";
+}
+
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <h3 class="m-0">Products</h3>
+    <a class="btn btn-primary" asp-action="Create">Create</a>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+
+<div class="table-responsive">
+    <table class="table align-middle">
+        <thead>
+        <tr>
+            <th>Id</th>
+            <th>SubCategoryId</th>
+            <th>Name</th>
+            <th>Price</th>
+            <th>Stock</th>
+            <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var p in Model)
+        {
+            <tr>
+                <td>@p.Id</td>
+                <td>@p.SubCategoryId</td>
+                <td>@p.Name</td>
+                <td>@p.Price.ToString("0.00")</td>
+                <td>@p.Stock</td>
+                <td class="text-end">
+                    <a class="btn btn-sm btn-outline-secondary" asp-action="Edit" asp-route-id="@p.Id">Edit</a>
+                    <form asp-action="Delete" method="post" class="d-inline">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@p.Id" />
+                        <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+                    </form>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>

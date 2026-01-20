@@ -1,0 +1,38 @@
+@model OrderSystem.Web.Controllers.PaymentController.PaymentVm
+@{
+    ViewData["Title"] = "Payment";
+}
+
+<h3>الدفع</h3>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+
+<form asp-action="Pay" method="post" class="row g-3">
+    @Html.AntiForgeryToken()
+
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    <div class="col-md-4">
+        <label asp-for="OrderId" class="form-label"></label>
+        <input asp-for="OrderId" class="form-control" />
+        <span asp-validation-for="OrderId" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-4 d-flex align-items-end">
+        <div class="form-check">
+            <input asp-for="UseStripe" class="form-check-input" />
+            <label asp-for="UseStripe" class="form-check-label">Stripe</label>
+        </div>
+    </div>
+
+    <div class="col-12">
+        <button class="btn btn-primary" type="submit">Pay</button>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

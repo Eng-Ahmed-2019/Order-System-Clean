@@ -1,0 +1,24 @@
+@model OrderSystem.Application.DTOs.OrderResponseDto
+@{
+    ViewData["Title"] = "Order Details";
+}
+
+<h3>تفاصيل الطلب</h3>
+
+@if (Model == null)
+{
+    <div class="alert alert-warning">الطلب غير موجود</div>
+}
+else
+{
+    <dl class="row">
+        <dt class="col-sm-3">Order Id</dt>
+        <dd class="col-sm-9">@Model.Id</dd>
+        <dt class="col-sm-3">Status</dt>
+        <dd class="col-sm-9">@Model.Status</dd>
+        <dt class="col-sm-3">Total</dt>
+        <dd class="col-sm-9">@Model.TotalAmount.ToString("0.00")</dd>
+        <dt class="col-sm-3">CreatedAt</dt>
+        <dd class="col-sm-9">@Model.CreatedAt</dd>
+    </dl>
+}

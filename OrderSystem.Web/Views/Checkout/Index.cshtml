@@ -1,0 +1,19 @@
+@{
+    ViewData["Title"] = "Checkout";
+}
+
+<h3>Checkout</h3>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+
+<div class="alert alert-info">
+    عملية الـ Checkout في الـ API بتجهز الـ Order للدفع. بعد التنفيذ، هتحتاج تدخل رقم الـ OrderId في صفحة الدفع.
+</div>
+
+<form asp-action="DoCheckout" method="post">
+    @Html.AntiForgeryToken()
+    <button class="btn btn-success" type="submit">تنفيذ Checkout</button>
+</form>

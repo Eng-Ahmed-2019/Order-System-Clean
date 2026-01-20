@@ -1,0 +1,11 @@
+@{
+    ViewData["Title"] = "Admin";
+}
+
+<h3>لوحة الإدارة</h3>
+
+<div class="list-group">
+    <a class="list-group-item list-group-item-action" asp-controller="AdminCategories" asp-action="Index">Categories</a>
+    <a class="list-group-item list-group-item-action" asp-controller="AdminSubCategories" asp-action="Index">SubCategories</a>
+    <a class="list-group-item list-group-item-action" asp-controller="AdminProducts" asp-action="Index">Products</a>
+</div>

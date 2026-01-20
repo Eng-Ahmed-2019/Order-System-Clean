@@ -1,0 +1,63 @@
+@model List<OrderSystem.Domain.Entities.OrderItem>
+@{
+    ViewData["Title"] = "Cart";
+    var total = Model.Sum(i => i.Quantity * i.UnitPrice);
+}
+
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <h3 class="m-0">سلة المشتريات</h3>
+    <a class="btn btn-outline-secondary" asp-controller="Store" asp-action="Index">متابعة التسوق</a>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">السلة فارغة</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>ProductId</th>
+                    <th>Quantity</th>
+                    <th>UnitPrice</th>
+                    <th>Line Total</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var i in Model)
+            {
+                <tr>
+                    <td>@i.Id</td>
+                    <td>@i.ProductId</td>
+                    <td>@i.Quantity</td>
+                    <td>@i.UnitPrice.ToString("0.00")</td>
+                    <td>@( (i.Quantity * i.UnitPrice).ToString("0.00") )</td>
+                    <td class="text-end">
+                        <form asp-action="Remove" method="post" class="d-inline">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@i.Id" />
+                            <button class="btn btn-sm btn-outline-danger" type="submit">حذف</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center">
+        <div class="fw-bold">الإجمالي: @total.ToString("0.00")</div>
+        <form asp-controller="Checkout" asp-action="Index" method="get">
+            <button class="btn btn-success" type="submit">Checkout</button>
+        </form>
+    </div>
+}

@@ -3,4 +3,5 @@
   <Project Path="OrderSystem.Application/OrderSystem.Application.csproj" />
   <Project Path="OrderSystem.Domain/OrderSystem.Domain.csproj" />
   <Project Path="OrderSystem.Infrastructure/OrderSystem.Infrastructure.csproj" />
+  <Project Path="OrderSystem.Web/OrderSystem.Web.csproj" />
 </Solution>
