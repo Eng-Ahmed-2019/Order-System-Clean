@@ -11,7 +11,9 @@
 
     <div class="col-md-4">
         <label asp-for="CategoryId" class="form-label"></label>
-        <input asp-for="CategoryId" class="form-control" />
+        <select asp-for="CategoryId" asp-items="Model.Categories" class="form-select">
+            <option value="">-- اختر قسم --</option>
+        </select>
         <span asp-validation-for="CategoryId" class="text-danger"></span>
     </div>
 

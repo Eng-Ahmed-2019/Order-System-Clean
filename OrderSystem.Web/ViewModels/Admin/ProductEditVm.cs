@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace OrderSystem.Web.ViewModels.Admin;
 
@@ -8,6 +9,7 @@ public class ProductEditVm
 
     [Required]
     [Range(1, int.MaxValue)]
+    [Display(Name = "SubCategory")]
     public int SubCategoryId { get; set; }
 
     [Required]
@@ -20,4 +22,6 @@ public class ProductEditVm
 
     [Range(0, int.MaxValue)]
     public int Stock { get; set; }
+
+    public List<SelectListItem> SubCategories { get; set; } = [];
 }

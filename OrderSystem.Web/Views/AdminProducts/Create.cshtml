@@ -11,7 +11,9 @@
 
     <div class="col-md-4">
         <label asp-for="SubCategoryId" class="form-label"></label>
-        <input asp-for="SubCategoryId" class="form-control" />
+        <select asp-for="SubCategoryId" asp-items="Model.SubCategories" class="form-select">
+            <option value="">-- اختر تصنيف فرعي --</option>
+        </select>
         <span asp-validation-for="SubCategoryId" class="text-danger"></span>
     </div>
 

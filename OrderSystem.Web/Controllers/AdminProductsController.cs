@@ -3,6 +3,7 @@ using OrderSystem.Web.Services;
 using OrderSystem.Domain.Entities;
 using OrderSystem.Web.ViewModels.Admin;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace OrderSystem.Web.Controllers;
 
@@ -24,22 +25,41 @@ public class AdminProductsController : Controller
     }
 
     [HttpGet]
-    public IActionResult Create() => View(new ProductEditVm());
+    public async Task<IActionResult> Create(CancellationToken ct)
+    {
+        var vm = new ProductEditVm();
+        await PopulateSubCategoriesAsync(vm, ct);
+        return View(vm);
+    }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(ProductEditVm vm, CancellationToken ct)
     {
-        if (!ModelState.IsValid) return View(vm);
-
-        await _api.PostAsync("api/products/create-product", new
+        if (!ModelState.IsValid)
         {
-            vm.SubCategoryId,
-            vm.Name,
-            vm.Description,
-            vm.Price,
-            vm.Stock
-        }, ct);
+            await PopulateSubCategoriesAsync(vm, ct);
+            return View(vm);
+        }
+
+        try
+        {
+            await _api.PostAsync("api/products/create-product", new
+            {
+                vm.SubCategoryId,
+                vm.Name,
+                vm.Description,
+                vm.Price,
+                vm.Stock
+            }, ct);
+        }
+        catch (HttpRequestException)
+        {
+            // غالبًا Validation من الـ API (اسم مكرر، سعر <= 0، إلخ)
+            ModelState.AddModelError(string.Empty, "فشل حفظ المنتج. تأكد من أن البيانات صحيحة (اسم غير مكرر في نفس التصنيف، سعر > 0، المخزون >= 0).");
+            await PopulateSubCategoriesAsync(vm, ct);
+            return View(vm);
+        }
 
         TempData["Success"] = "تم إنشاء المنتج";
         return RedirectToAction(nameof(Index));
@@ -51,7 +71,7 @@ public class AdminProductsController : Controller
         var items = await _api.GetAsync<List<Product>>("api/products/Get-All-Products", ct) ?? [];
         var current = items.FirstOrDefault(x => x.Id == id);
         if (current == null) return NotFound();
-        return View(new ProductEditVm
+        var vm = new ProductEditVm
         {
             Id = current.Id,
             SubCategoryId = current.SubCategoryId,
@@ -59,14 +79,20 @@ public class AdminProductsController : Controller
             Description = current.Description,
             Price = current.Price,
             Stock = current.Stock
-        });
+        };
+        await PopulateSubCategoriesAsync(vm, ct);
+        return View(vm);
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(ProductEditVm vm, CancellationToken ct)
     {
-        if (!ModelState.IsValid) return View(vm);
+        if (!ModelState.IsValid)
+        {
+            await PopulateSubCategoriesAsync(vm, ct);
+            return View(vm);
+        }
 
         await _api.PutAsync("api/products/Update-Product", new
         {
@@ -89,5 +115,18 @@ public class AdminProductsController : Controller
         await _api.DeleteAsync("api/products/Delete-Product", new { ProductId = id }, ct);
         TempData["Success"] = "تم حذف المنتج";
         return RedirectToAction(nameof(Index));
+    }
+
+    private async Task PopulateSubCategoriesAsync(ProductEditVm vm, CancellationToken ct)
+    {
+        var subs = await _api.GetAsync<List<SubCategory>>("api/subcategories/Get-All", ct) ?? [];
+        vm.SubCategories = subs
+            .Select(s => new SelectListItem
+            {
+                Value = s.Id.ToString(),
+                Text = s.Name,
+                Selected = s.Id == vm.SubCategoryId
+            })
+            .ToList();
     }
 }

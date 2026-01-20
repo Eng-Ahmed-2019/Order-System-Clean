@@ -19,16 +19,24 @@ public class StoreController : Controller
         if (!User.Identity?.IsAuthenticated ?? true)
             return RedirectToAction("Login", "Account", new { returnUrl = Url.Action("Index", "Store") });
 
-        var categories = await _api.GetAsync<List<Category>>("api/categories/GetAllCategories", ct) ?? [];
-        var subCategories = await _api.GetAsync<List<SubCategory>>("api/subcategories/Get-All", ct) ?? [];
-        var products = await _api.GetAsync<List<Product>>("api/products/Get-All-Products", ct) ?? [];
-
-        return View(new StoreIndexVm
+        try
         {
-            Categories = categories,
-            SubCategories = subCategories,
-            Products = products
-        });
+            var categories = await _api.GetAsync<List<Category>>("api/categories/GetAllCategories", ct) ?? [];
+            var subCategories = await _api.GetAsync<List<SubCategory>>("api/subcategories/Get-All", ct) ?? [];
+            var products = await _api.GetAsync<List<Product>>("api/products/Get-All-Products", ct) ?? [];
+
+            return View(new StoreIndexVm
+            {
+                Categories = categories,
+                SubCategories = subCategories,
+                Products = products
+            });
+        }
+        catch (UnauthorizedAccessException)
+        {
+            TempData["Success"] = "تم انتهاء الجلسة. سجل دخولك مرة أخرى.";
+            return RedirectToAction("Login", "Account", new { returnUrl = Url.Action("Index", "Store") });
+        }
     }
 
     public sealed class StoreIndexVm

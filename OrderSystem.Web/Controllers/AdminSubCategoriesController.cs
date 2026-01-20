@@ -3,6 +3,7 @@ using OrderSystem.Web.Services;
 using OrderSystem.Domain.Entities;
 using OrderSystem.Web.ViewModels.Admin;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace OrderSystem.Web.Controllers;
 
@@ -24,13 +25,22 @@ public class AdminSubCategoriesController : Controller
     }
 
     [HttpGet]
-    public IActionResult Create() => View(new SubCategoryEditVm());
+    public async Task<IActionResult> Create(CancellationToken ct)
+    {
+        var vm = new SubCategoryEditVm();
+        await PopulateCategoriesAsync(vm, ct);
+        return View(vm);
+    }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(SubCategoryEditVm vm, CancellationToken ct)
     {
-        if (!ModelState.IsValid) return View(vm);
+        if (!ModelState.IsValid)
+        {
+            await PopulateCategoriesAsync(vm, ct);
+            return View(vm);
+        }
 
         await _api.PostAsync("api/subcategories/create-subcategory", new { vm.CategoryId, vm.Name, vm.Description }, ct);
         TempData["Success"] = "تم إنشاء التصنيف الفرعي";
@@ -43,20 +53,26 @@ public class AdminSubCategoriesController : Controller
         var items = await _api.GetAsync<List<SubCategory>>("api/subcategories/Get-All", ct) ?? [];
         var current = items.FirstOrDefault(x => x.Id == id);
         if (current == null) return NotFound();
-        return View(new SubCategoryEditVm
+        var vm = new SubCategoryEditVm
         {
             Id = current.Id,
             CategoryId = current.CategoryId,
             Name = current.Name,
             Description = current.Description
-        });
+        };
+        await PopulateCategoriesAsync(vm, ct);
+        return View(vm);
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(SubCategoryEditVm vm, CancellationToken ct)
     {
-        if (!ModelState.IsValid) return View(vm);
+        if (!ModelState.IsValid)
+        {
+            await PopulateCategoriesAsync(vm, ct);
+            return View(vm);
+        }
 
         await _api.PutAsync("api/subcategories/Update-SubCategory", new { vm.Id, vm.CategoryId, vm.Name, vm.Description }, ct);
         TempData["Success"] = "تم تعديل التصنيف الفرعي";
@@ -70,5 +86,18 @@ public class AdminSubCategoriesController : Controller
         await _api.DeleteAsync("api/subcategories/Delete-SubCategory", new { Id = id }, ct);
         TempData["Success"] = "تم حذف التصنيف الفرعي";
         return RedirectToAction(nameof(Index));
+    }
+
+    private async Task PopulateCategoriesAsync(SubCategoryEditVm vm, CancellationToken ct)
+    {
+        var categories = await _api.GetAsync<List<Category>>("api/categories/GetAllCategories", ct) ?? [];
+        vm.Categories = categories
+            .Select(c => new SelectListItem
+            {
+                Value = c.Id.ToString(),
+                Text = c.Name,
+                Selected = c.Id == vm.CategoryId
+            })
+            .ToList();
     }
 }
