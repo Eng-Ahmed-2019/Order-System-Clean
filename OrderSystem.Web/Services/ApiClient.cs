@@ -1,8 +1,8 @@
 using System.Net;
 using System.Text;
 using System.Text.Json;
-using System.Net.Http.Headers;
 using System.Security.Claims;
+using System.Net.Http.Headers;
 
 namespace OrderSystem.Web.Services;
 
@@ -42,6 +42,15 @@ public class ApiClient
         var resp = await client.PostAsync(relativeUrl, content, ct);
         if (resp.StatusCode == HttpStatusCode.Unauthorized)
             throw new UnauthorizedAccessException("API returned 401 Unauthorized.");
+
+        if (resp.StatusCode == HttpStatusCode.BadRequest)
+        {
+            var errorContent = await resp.Content.ReadAsStringAsync(ct);
+            throw new HttpRequestException(string.IsNullOrWhiteSpace(errorContent)
+                ? "API returned 400 Bad Request"
+                : errorContent);
+        }
+
         resp.EnsureSuccessStatusCode();
         var json = await resp.Content.ReadAsStringAsync(ct);
         return JsonSerializer.Deserialize<TResponse>(json, JsonOptions);
@@ -55,6 +64,15 @@ public class ApiClient
         var resp = await client.PostAsync(relativeUrl, content, ct);
         if (resp.StatusCode == HttpStatusCode.Unauthorized)
             throw new UnauthorizedAccessException("API returned 401 Unauthorized.");
+
+        if (resp.StatusCode == HttpStatusCode.BadRequest)
+        {
+            var errorContent = await resp.Content.ReadAsStringAsync(ct);
+            throw new HttpRequestException(string.IsNullOrWhiteSpace(errorContent)
+                ? "API returned 400 Bad Request"
+                : errorContent);
+        }
+
         resp.EnsureSuccessStatusCode();
     }
 
@@ -66,6 +84,15 @@ public class ApiClient
         var resp = await client.PutAsync(relativeUrl, content, ct);
         if (resp.StatusCode == HttpStatusCode.Unauthorized)
             throw new UnauthorizedAccessException("API returned 401 Unauthorized.");
+
+        if (resp.StatusCode == HttpStatusCode.BadRequest)
+        {
+            var errorContent = await resp.Content.ReadAsStringAsync(ct);
+            throw new HttpRequestException(string.IsNullOrWhiteSpace(errorContent)
+                ? "API returned 400 Bad Request"
+                : errorContent);
+        }
+
         resp.EnsureSuccessStatusCode();
     }
 
@@ -82,6 +109,15 @@ public class ApiClient
         var resp = await client.SendAsync(request, ct);
         if (resp.StatusCode == HttpStatusCode.Unauthorized)
             throw new UnauthorizedAccessException("API returned 401 Unauthorized.");
+
+        if (resp.StatusCode == HttpStatusCode.BadRequest || resp.StatusCode == HttpStatusCode.InternalServerError)
+        {
+            var errorContent = await resp.Content.ReadAsStringAsync(ct);
+            throw new HttpRequestException(string.IsNullOrWhiteSpace(errorContent)
+                ? $"API returned {(int)resp.StatusCode} {resp.StatusCode}"
+                : errorContent);
+        }
+
         resp.EnsureSuccessStatusCode();
     }
 

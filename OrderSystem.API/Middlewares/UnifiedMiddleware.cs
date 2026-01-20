@@ -1,4 +1,5 @@
 ﻿using System.Security.Claims;
+using OrderSystem.Domain.Entities;
 using System.IdentityModel.Tokens.Jwt;
 using OrderSystem.Application.Exceptions;
 using OrderSystem.Application.Interfaces;
@@ -28,7 +29,16 @@ namespace OrderSystem.API.Middlewares
 
                 if (sid == null || userId == null) throw new UnauthorizedException("Invalid token");
 
-                var session = await sessionRepository.GetByIdAsync(Guid.Parse(sid));
+                UserSession? session;
+                try
+                {
+                    session = await sessionRepository.GetByIdAsync(Guid.Parse(sid));
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Session store error while validating token (sid={Sid}, userId={UserId})", sid, userId);
+                    throw new UnauthorizedException("Session validation failed. Please log in again.");
+                }
                 if (session == null || session.ExpiresAt < DateTime.UtcNow)
                     throw new UnauthorizedException("Session expired. Please log in again.");
 

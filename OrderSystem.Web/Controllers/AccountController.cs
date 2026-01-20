@@ -57,7 +57,6 @@ public class AccountController : Controller
         HttpContext.Session.SetString(AuthSessionKeys.ExpiresAtUtc, resp.Data.ExpiresAt.ToUniversalTime().ToString("O"));
 
         var principal = BuildPrincipalFromJwt(resp.Data.Token);
-        // Keep token available even if session is lost (so ApiClient can still call API)
         ((ClaimsIdentity)principal.Identity!).AddClaim(new Claim(AuthSessionKeys.AccessTokenClaimType, resp.Data.Token));
         await HttpContext.SignInAsync(
             "Cookies",

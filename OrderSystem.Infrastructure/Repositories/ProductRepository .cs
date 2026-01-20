@@ -82,7 +82,7 @@ namespace OrderSystem.Infrastructure.Repositories
 
         public async Task<IEnumerable<Product>> GetAllAsync()
         {
-            var sql = @"SELECT * FROM Products ORDER BY Id DESC";
+            var sql = @"SELECT * FROM Products WHERE IsActive = 1 ORDER BY Id DESC";
             using var conn = _context.CreateConnection();
             return await conn.QueryAsync<Product>(sql);
         }
@@ -113,7 +113,7 @@ namespace OrderSystem.Infrastructure.Repositories
         {
             var sql = @"SELECT *
                 FROM Products
-                WHERE SubCategoryId = @SubCategoryId
+                WHERE SubCategoryId = @SubCategoryId AND IsActive = 1
                 ORDER BY Id DESC";
 
             using var conn = _context.CreateConnection();

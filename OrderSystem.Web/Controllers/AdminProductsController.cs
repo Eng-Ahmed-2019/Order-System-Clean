@@ -55,7 +55,6 @@ public class AdminProductsController : Controller
         }
         catch (HttpRequestException)
         {
-            // غالبًا Validation من الـ API (اسم مكرر، سعر <= 0، إلخ)
             ModelState.AddModelError(string.Empty, "فشل حفظ المنتج. تأكد من أن البيانات صحيحة (اسم غير مكرر في نفس التصنيف، سعر > 0، المخزون >= 0).");
             await PopulateSubCategoriesAsync(vm, ct);
             return View(vm);
@@ -94,15 +93,24 @@ public class AdminProductsController : Controller
             return View(vm);
         }
 
-        await _api.PutAsync("api/products/Update-Product", new
+        try
         {
-            vm.Id,
-            vm.SubCategoryId,
-            vm.Name,
-            vm.Description,
-            vm.Price,
-            vm.Stock
-        }, ct);
+            await _api.PutAsync("api/products/Update-Product", new
+            {
+                vm.Id,
+                vm.SubCategoryId,
+                vm.Name,
+                vm.Description,
+                vm.Price,
+                vm.Stock
+            }, ct);
+        }
+        catch (HttpRequestException)
+        {
+            ModelState.AddModelError(string.Empty, "فشل تعديل المنتج. تأكد من أن البيانات صحيحة (اسم غير مكرر في نفس التصنيف، سعر > 0، المخزون >= 0).");
+            await PopulateSubCategoriesAsync(vm, ct);
+            return View(vm);
+        }
 
         TempData["Success"] = "تم تعديل المنتج";
         return RedirectToAction(nameof(Index));
@@ -112,8 +120,19 @@ public class AdminProductsController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Delete(int id, CancellationToken ct)
     {
-        await _api.DeleteAsync("api/products/Delete-Product", new { ProductId = id }, ct);
-        TempData["Success"] = "تم حذف المنتج";
+        try
+        {
+            await _api.DeleteAsync("api/products/Delete-Product", new { ProductId = id }, ct);
+            TempData["Success"] = "تم حذف المنتج";
+        }
+        catch (HttpRequestException ex)
+        {
+            var msg = string.IsNullOrWhiteSpace(ex.Message)
+                ? "فشل حذف المنتج. حدث خطأ في الخادم."
+                : ex.Message;
+            TempData["Error"] = msg;
+        }
+
         return RedirectToAction(nameof(Index));
     }
 

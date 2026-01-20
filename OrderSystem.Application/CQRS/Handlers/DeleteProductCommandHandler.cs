@@ -18,7 +18,17 @@ namespace OrderSystem.Application.CQRS.Handlers
         {
             var product = await _productRepository.GetByIdAsync(request.id);
             if (product == null) throw new BusinessException("Product not found");
-            return await _productRepository.DeleteAsync(request.id);
+
+            product.IsActive = false;
+
+            try
+            {
+                return await _productRepository.UpdateAsync(product);
+            }
+            catch (Exception ex)
+            {
+                throw new BusinessException($"Failed to delete product: {ex.Message}");
+            }
         }
     }
 }

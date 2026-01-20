@@ -13,7 +13,71 @@
     عملية الـ Checkout في الـ API بتجهز الـ Order للدفع. بعد التنفيذ، هتحتاج تدخل رقم الـ OrderId في صفحة الدفع.
 </div>
 
-<form asp-action="DoCheckout" method="post">
+<form id="checkout-form" asp-action="DoCheckout" method="post">
     @Html.AntiForgeryToken()
-    <button class="btn btn-success" type="submit">تنفيذ Checkout</button>
+    <button id="checkout-submit" class="btn btn-success" type="submit">تنفيذ Checkout</button>
+    <button id="checkout-spinner" class="btn btn-success d-none" type="button" disabled>
+        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+        Processing...
+    </button>
 </form>
+
+@section Scripts {
+    <script>
+        (function(){
+            const form = document.getElementById('checkout-form');
+            const submit = document.getElementById('checkout-submit');
+            const spinner = document.getElementById('checkout-spinner');
+            let isProcessing = false;
+
+            function beforeUnloadHandler(e) {
+                if (!isProcessing) return undefined;
+                e.preventDefault();
+                e.returnValue = '';
+                return '';
+            }
+
+            form.addEventListener('submit', async function(e){
+                e.preventDefault();
+                if (isProcessing) return;
+
+                isProcessing = true;
+                submit.classList.add('d-none');
+                spinner.classList.remove('d-none');
+                window.addEventListener('beforeunload', beforeUnloadHandler);
+
+                const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
+                try {
+                    const resp = await fetch(form.action, {
+                        method: 'POST',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'RequestVerificationToken': token
+                        },
+                        body: new FormData(form)
+                    });
+
+                    if (!resp.ok) {
+                        const json = resp.headers.get('content-type') && resp.headers.get('content-type').includes('application/json') ? await resp.json() : null;
+                        const msg = (json && (json.message || (json.errors && json.errors.join('<br/>')))) || 'فشل تنفيذ Checkout';
+                        alert(msg);
+                        return;
+                    }
+
+                    window.open('/Payment', '_blank');
+                    window.location.href = '/Payment';
+                }
+                catch (err) {
+                    console.error(err);
+                    alert('فشل الاتصال بالخادم أثناء تنفيذ Checkout');
+                }
+                finally {
+                    isProcessing = false;
+                    window.removeEventListener('beforeunload', beforeUnloadHandler);
+                    spinner.classList.add('d-none');
+                    submit.classList.remove('d-none');
+                }
+            });
+        })();
+    </script>
+}

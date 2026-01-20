@@ -10,14 +10,24 @@
     <div class="alert alert-success">@TempData["Success"]</div>
 }
 
-<form asp-action="Pay" method="post" class="row g-3">
+<div id="payment-alert"></div>
+
+<div id="leave-confirm" class="alert alert-warning d-none fixed-top m-3" style="z-index:1050; display:flex; align-items:center; justify-content:space-between;">
+    <div>هل أنت متأكد أنك تريد المغادرة؟ عملية الدفع لم تكتمل بعد.</div>
+    <div>
+        <button id="leave-confirm-stay" class="btn btn-sm btn-secondary me-2">ابقَ</button>
+        <button id="leave-confirm-leave" class="btn btn-sm btn-danger">مغادرة</button>
+    </div>
+</div>
+
+<form id="payment-form" asp-action="Pay" method="post" class="row g-3">
     @Html.AntiForgeryToken()
 
     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
     <div class="col-md-4">
         <label asp-for="OrderId" class="form-label"></label>
-        <input asp-for="OrderId" class="form-control" />
+        <input asp-for="OrderId" class="form-control" type="number" min="1" />
         <span asp-validation-for="OrderId" class="text-danger"></span>
     </div>
 
@@ -29,10 +39,212 @@
     </div>
 
     <div class="col-12">
-        <button class="btn btn-primary" type="submit">Pay</button>
+        <button id="payment-submit" class="btn btn-primary" type="submit">Pay</button>
+        <button id="payment-spinner" class="btn btn-primary d-none" type="button" disabled>
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            Processing...
+        </button>
+    </div>
+
+    <div class="col-12 mt-2">
+        <small class="text-muted">إذا بدأت عملية دفع ولم تكملها، سيُحفظ رقم الطلب محليًا لتتمكن من العودة ومتابعة الدفع.</small>
     </div>
 </form>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function(){
+            const STORAGE_KEY = 'pendingOrderId';
+            const form = document.getElementById('payment-form');
+            const submit = document.getElementById('payment-submit');
+            const spinner = document.getElementById('payment-spinner');
+            const alertBox = document.getElementById('payment-alert');
+            const orderInput = document.querySelector('input[name="OrderId"]');
+            const leaveBanner = document.getElementById('leave-confirm');
+            const leaveBtn = document.getElementById('leave-confirm-leave');
+            const stayBtn = document.getElementById('leave-confirm-stay');
+            let isProcessing = false;
+
+            try {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                if (saved && (!orderInput.value || orderInput.value === '0')) {
+                    orderInput.value = saved;
+                }
+            } catch (e) {  }
+
+            function setPendingOrderId(id) {
+                try {
+                    if (id) localStorage.setItem(STORAGE_KEY, String(id));
+                } catch (e) { }
+            }
+
+            function clearPendingOrderId() {
+                try { localStorage.removeItem(STORAGE_KEY); } catch (e) { }
+            }
+
+            function beforeUnloadHandler(e) {
+                const pending = (() => { try { return localStorage.getItem(STORAGE_KEY); } catch { return null; }})();
+                if (!pending) return undefined;
+                e.preventDefault();
+                e.returnValue = '';
+                return '';
+            }
+
+            function addUnloadListener() {
+                window.addEventListener('beforeunload', beforeUnloadHandler);
+            }
+            function removeUnloadListener() {
+                window.removeEventListener('beforeunload', beforeUnloadHandler);
+            }
+
+            try {
+                if (localStorage.getItem(STORAGE_KEY)) {
+                    addUnloadListener();
+                }
+            } catch (e) { }
+
+            let pendingNavigation = null;
+
+            document.addEventListener('click', function(e){
+                if (isProcessing) return;
+                const anchor = e.target.closest('a');
+                if (!anchor) return;
+                const href = anchor.getAttribute('href');
+                const target = anchor.getAttribute('target');
+                if (!href || href.startsWith('#') || href.startsWith('javascript:')) return;
+                const origin = location.origin;
+                try {
+                    const url = new URL(href, location.href);
+                    if (url.origin !== origin) return;
+                } catch { return; }
+                if (target && target !== '_self') return;
+
+                const pending = (() => { try { return localStorage.getItem(STORAGE_KEY); } catch { return null; }})();
+                if (!pending) return;
+
+                e.preventDefault();
+                pendingNavigation = { type: 'href', href: new URL(href, location.href).href };
+                showLeaveBanner();
+            }, { capture: true });
+
+            document.addEventListener('submit', function(e){
+                if (isProcessing) return;
+                const frm = e.target.closest('form');
+                if (!frm) return;
+                if (frm === form) return;
+
+                const pending = (() => { try { return localStorage.getItem(STORAGE_KEY); } catch { return null; }})();
+                if (!pending) return;
+
+                e.preventDefault();
+                pendingNavigation = { type: 'form', form: frm };
+                showLeaveBanner();
+            }, { capture: true });
+
+            function showLeaveBanner(){
+                leaveBanner.classList.remove('d-none');
+                leaveBanner.style.display = 'flex';
+            }
+            function hideLeaveBanner(){
+                leaveBanner.classList.add('d-none');
+                leaveBanner.style.display = 'none';
+            }
+
+            stayBtn.addEventListener('click', function(){
+                pendingNavigation = null;
+                hideLeaveBanner();
+            });
+
+            leaveBtn.addEventListener('click', function(){
+                if (!pendingNavigation) { hideLeaveBanner(); return; }
+                const nav = pendingNavigation;
+                pendingNavigation = null;
+                hideLeaveBanner();
+                removeUnloadListener();
+                clearPendingOrderId();
+
+                if (nav.type === 'href') {
+                    window.location.href = nav.href;
+                } else if (nav.type === 'form') {
+                    try { nav.form.submit(); } catch { }
+                }
+            });
+
+            form.addEventListener('submit', async function(e){
+                e.preventDefault();
+                if (isProcessing) return;
+
+                if (!form.checkValidity()) {
+                    form.reportValidity();
+                    return;
+                }
+
+                const raw = orderInput.value;
+                const orderId = parseInt(raw, 10);
+                if (Number.isNaN(orderId) || orderId <= 0) {
+                    alertBox.innerHTML = `<div class="alert alert-danger">أدخل رقم طلب صالح (عدد صحيح أكبر من صفر).</div>`;
+                    return;
+                }
+
+                setPendingOrderId(orderId);
+                addUnloadListener();
+
+                isProcessing = true;
+                submit.classList.add('d-none');
+                spinner.classList.remove('d-none');
+
+                const formData = new FormData(form);
+                formData.set('OrderId', String(orderId));
+
+                try {
+                    const resp = await fetch(form.action, {
+                        method: 'POST',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: formData
+                    });
+
+                    const contentType = resp.headers.get('content-type') || '';
+                    const json = contentType.indexOf('application/json') !== -1 ? await resp.json() : null;
+
+                    if (!resp.ok) {
+                        spinner.classList.add('d-none');
+                        submit.classList.remove('d-none');
+                        const msg = (json && (json.message || (json.errors && json.errors.join('<br/>')))) || 'فشل الدفع';
+                        alertBox.innerHTML = `<div class="alert alert-danger">${msg}</div>`;
+                        return;
+                    }
+
+                    clearPendingOrderId();
+                    removeUnloadListener();
+                    alertBox.innerHTML = `<div class="alert alert-success">${json?.message || 'تمت عملية الدفع بنجاح'}</div>`;
+                    setTimeout(function(){
+                        window.location.href = (json && json.redirect) || '/Orders/Index';
+                    }, 900);
+
+                } catch (err) {
+                    spinner.classList.add('d-none');
+                    submit.classList.remove('d-none');
+                    alertBox.innerHTML = `<div class="alert alert-danger">فشل الاتصال بالخادم</div>`;
+                    console.error(err);
+                }
+                finally {
+                    isProcessing = false;
+                }
+            });
+
+            const clearBtn = document.createElement('button');
+            clearBtn.type = 'button';
+            clearBtn.className = 'btn btn-link btn-sm';
+            clearBtn.textContent = 'مسح رقم الطلب المحفوظ';
+            clearBtn.addEventListener('click', function(){
+                clearPendingOrderId();
+                removeUnloadListener();
+                alertBox.innerHTML = `<div class="alert alert-info">تم مسح رقم الطلب المحفوظ</div>`;
+            });
+            document.querySelector('form#payment-form .col-12.mt-2')?.appendChild(clearBtn);
+        })();
+    </script>
 }
