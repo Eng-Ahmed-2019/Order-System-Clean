@@ -143,6 +143,8 @@ builder.Services.AddScoped<ISubCategoryRepository, SubCategoryRepository>();
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<ICartRepository, CartRepository>();
 builder.Services.AddScoped<IOrderItemRepository, OrderItemRepository>();
+builder.Services.AddScoped<IBanIpRepository, BanIpRepository>();
+builder.Services.AddScoped<ILoginLockoutRepository, LoginLockoutRepository>();
 builder.Services.AddHostedService<PaymentRetryBackgroundService>();
 builder.Services.Configure<StripeSettings>(
         builder.Configuration.GetSection("Stripe")
