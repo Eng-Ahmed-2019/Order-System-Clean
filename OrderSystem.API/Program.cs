@@ -7,6 +7,7 @@ using Serilog.Sinks.MSSqlServer;
 using OrderSystem.Domain.Entities;
 using OrderSystem.API.Middlewares;
 using FluentValidation.AspNetCore;
+using System.Threading.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using OrderSystem.Infrastructure.Data;
 using OrderSystem.Application.Services;
@@ -33,6 +34,48 @@ Serilog.Log.Logger = new LoggerConfiguration()
         })
     .CreateLogger();
 builder.Host.UseSerilog();
+builder.Services.AddRateLimiter(options =>
+{
+    // It alerts when the user crosses the limit
+    options.OnRejected = async (context, token) =>
+    {
+        context.HttpContext.Response.StatusCode = 429;
+        await context.HttpContext.Response.WriteAsync(
+            "Too many requests. Please try again later."
+        );
+    };
+
+    options.AddPolicy("AuthPolicy", context =>
+    {
+        var ip = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+
+        return RateLimitPartition.GetTokenBucketLimiter(
+            // Each IP has its own bucket (important against Brute Force)
+            ip,
+            _ => new TokenBucketRateLimiterOptions
+            {
+                TokenLimit = 5, // Reduce the number of Tokens in the bucket (i.e., 5 Requests at once)
+                TokensPerPeriod = 5, // Number of returned Tokens
+                ReplenishmentPeriod = TimeSpan.FromMinutes(1), // Every minute returns 5 Tokens // meaning: 5 login attempts per minute // great for security
+                AutoReplenishment = true, // Tokens automatically renew or refresh automatically 
+                QueueLimit = 0, // No queueing of requests // if no tokens are available, reject immediately
+                // QueueLimit = 2, // Allow queuing of requests when no tokens are available
+                // Queue is useful for read, Search, Get operations // Dangerous for login, register operations
+            });
+    });
+
+    options.AddPolicy("GeneralPolicy", context =>
+        RateLimitPartition.GetTokenBucketLimiter(
+            context.Connection.RemoteIpAddress?.ToString() ?? "unknown", // only by IP
+            _ => new TokenBucketRateLimiterOptions
+            {
+                TokenLimit = 100,
+                TokensPerPeriod = 20,
+                ReplenishmentPeriod = TimeSpan.FromSeconds(10),
+                AutoReplenishment = true,
+                QueueLimit = 10
+            }));
+});
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -167,6 +210,9 @@ builder.Services.AddMediatR(r =>
     r.RegisterServicesFromAssembly(typeof(DeleteProductCommandHandler).Assembly);
     r.RegisterServicesFromAssembly(typeof(GetSubCategoriesByCategoryIdHandler).Assembly);
     r.RegisterServicesFromAssembly(typeof(GetProductsBySubCategoryIdHandler).Assembly);
+    r.RegisterServicesFromAssembly(typeof(GetLoginLockoutQueryHandler).Assembly);
+    r.RegisterServicesFromAssembly(typeof(RegisterLoginFailureCommandHandler).Assembly);
+    r.RegisterServicesFromAssembly(typeof(ResetLoginLockoutCommandHandler).Assembly);
 });
 // Force TLS 1.2 for all outgoing HTTPS requests
 ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
@@ -184,6 +230,8 @@ app.UseMiddleware<UnifiedMiddleware>();
 */
 app.UseMiddleware<CustomExceptionMiddleware>();
 app.UseHttpsRedirection();
+app.UseMiddleware<BanIpMiddleware>();
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseMiddleware<UnifiedMiddleware>();

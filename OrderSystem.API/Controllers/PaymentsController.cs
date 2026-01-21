@@ -3,6 +3,7 @@ using FluentValidation;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using OrderSystem.Application.DTOs;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Authorization;
 using OrderSystem.Application.CQRS.Commands;
 
@@ -11,6 +12,7 @@ namespace OrderSystem.API.Controllers
     [ApiController]
     [Route("api/payments")]
     [Authorize(Roles = "User")]
+    [EnableRateLimiting("AuthPolicy")]
     public class PaymentsController : ControllerBase
     {
         private readonly IMediator _mediator;

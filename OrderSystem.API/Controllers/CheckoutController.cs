@@ -1,6 +1,7 @@
 ﻿using MediatR;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Authorization;
 using OrderSystem.Application.CQRS.Commands;
 
@@ -9,6 +10,7 @@ namespace OrderSystem.API.Controllers
     [ApiController]
     [Route("api/[controller]")]
     [Authorize(Roles = "User")]
+    [EnableRateLimiting("GeneralPolicy")]
     public class CheckoutController : ControllerBase
     {
         private readonly IMediator _mediator;
